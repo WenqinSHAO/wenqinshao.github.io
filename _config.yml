@@ -35,10 +35,8 @@ minima:
   nav_pages:
     - about.md
 
-markdown: kramdown
-kramdown:
-  input: GFM
-  math_engine: mathjax
+markdown: GFM
+
 
 
 # Exclude from processing.
