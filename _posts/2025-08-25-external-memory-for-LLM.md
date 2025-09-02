@@ -1,10 +1,10 @@
 ---
 layout: post
-title: LLM外部记忆系统，长上下文之外
+title: LLM外部记忆系统 1：为什么需要，现有的一些工作
 date: 2025-08-25
 ---
 
-> **更长上下文**、**KV cache 扩展**, **context engineering**做算法，做AI Infra的大家都在输出。大家在稀疏注意力（比如 [NSA DeepSeek][0.1]、[Recurrent Memory Transformer][0.2]）和各种“内存池”里挖掘极限，核心矛盾却没变：注意力在**扩展性**与**成本**之间有硬伤，怎么拧都难两全。个人naive的爆论是：上下文再长也是有现的。attention机制这样的东西自己暂时没有条件直接上手，不如来想想外部数据存储能高效地和LLM的working memory对接。
+> **更长上下文**、**KV cache 扩展**, **context engineering**做算法，做AI Infra的大家都在输出。大家在稀疏注意力（比如 [NSA DeepSeek][0.1]、[Recurrent Memory Transformer][0.2]）和各种“内存池”里挖掘极限，核心矛盾却没变：注意力在**扩展性**与**成本**之间有硬伤，怎么拧都难两全。个人naive的爆论是：上下文再长也是有限的。attention机制这样的东西自己暂时没有条件直接上手，不如来想想外部数据存储如何高效地和LLM的working memory对接。
 
 复杂应用里，Agent 需要的是**长期、可演化、可复用**的记忆，不是一次推理时临时堆上下文。这篇笔记试着**从“外部记忆系统”的角度**把脉络串起来：从早年 NTM/DNC、系统级的 DiskANN，一直到近期的 MemOS、Titans、KBLaM、KG-attention、Zep 等。我想回答两个问题：
 
