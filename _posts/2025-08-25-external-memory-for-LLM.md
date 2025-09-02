@@ -1,6 +1,6 @@
 ---
 layout: post
-title: LLM外部记忆系统，长上下文之外
+title: LLM外部记忆系统 1：为什么需要，现有的一些工作
 date: 2025-08-25
 ---
 
