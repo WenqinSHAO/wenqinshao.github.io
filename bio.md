@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Bio
+title: Wenqin's bio
 permalink: /bio/
 ---
 
