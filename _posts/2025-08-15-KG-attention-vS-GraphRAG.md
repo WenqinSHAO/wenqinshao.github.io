@@ -4,9 +4,7 @@ title: KG-Attention怎么和GraphRAG比，核心贡献是什么
 date: 2025-08-15
 ---
 
-## 概述
-
-- 本文与 GraphRAG 的核心差异在于检索阶段是否使用语义理解（GraphRAG 用 LLM 引导检索，而 KGA 是检索后再做语义过滤）。这与其在简单问答任务上表现不佳密切相关。
+- KG-attention与 GraphRAG 的核心差异在于检索阶段是否使用语义理解（GraphRAG 用 LLM 引导检索，而 KGA 是检索后再做语义过滤）。这与其在简单问答任务上表现不佳密切相关。
 - KGA 的最大贡献不在于检索机制，而在于 inward aggregation，即使用 LLM 自身的 attention 机制去精细判断 KG 中哪些 triplet 与输入最相关，具体体现在公式 (3)(4)(5)。
 - 我们补充推理出最终 LLM 的 working memory 有两种可能性，原文对此部分描述不清。
 - 最后评估了该方法引入的额外计算与空间开销，发现虽然 attention 成本增加，但只要保留的 K 个 triplet 控制得当，KV 扩展仍是可控的。
