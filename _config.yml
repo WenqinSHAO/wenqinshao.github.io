@@ -20,6 +20,8 @@
 
 title: Snow River Notes 钓雪记
 author: Wenqin Shao (邵文钦)
+email: wenqin.shao.sh@gmail.com
+first_year: 2024
 description: >- # this means to ignore newlines until "baseurl:"  
   A blog about life in AI.
 baseurl: "" # the subpath of your site, e.g. /blog
@@ -45,6 +47,11 @@ show_excerpts: true
 # use this marker inside posts to control where the abstract cuts off
 # excerpt_separator: "<!--more-->"
 
+default_license: cc-by-nc-4.0          # text/posts by default
+assets_default_license: all-rights     # images/illustrations by default
+code_license: MIT
+
+footer_rights: ""
 
 # Exclude from processing.
 # The following items will not be processed, by default.
