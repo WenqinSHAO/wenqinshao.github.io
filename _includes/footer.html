@@ -1,0 +1,33 @@
+<footer class="site-footer h-card">
+  <data class="u-url" href="{{ '/' | relative_url }}"></data>
+
+  <div class="wrapper">
+    <h2 class="footer-heading">{{ site.title | escape }}</h2>
+
+    {% include license.html %}
+    {%- comment -%} Derive start & current year for copyright {%- endcomment -%}
+    {%- assign start_year = site.first_year -%}
+    {%- if start_year == nil or start_year == '' -%}
+      {%- if site.posts and site.posts != empty -%}
+        {%- assign first_post = site.posts | last -%}
+        {%- assign start_year = first_post.date | date: "%Y" -%}
+      {%- else -%}
+        {%- assign start_year = site.time | date: "%Y" -%}
+      {%- endif -%}
+    {%- endif -%}
+    {%- assign current_year = site.time | date: "%Y" -%}
+
+    <hr class="footer-rule" />
+
+    <p class="footer-copyright" style="text-align: right;">
+  
+      {%- if site.author.name -%}
+        {{ site.author.name | escape }}
+      {%- elsif site.author -%}
+        {{ site.author | escape }}
+      {%- else -%}
+        {{ site.title | escape }}
+      {%- endif -%}
+    </p>
+  </div>
+</footer>
