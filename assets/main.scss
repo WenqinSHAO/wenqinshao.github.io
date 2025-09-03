@@ -1,0 +1,32 @@
+---
+# Only the main Sass file needs front matter for Jekyll to process it
+---
+
+@import "minima";
+
+/* Sticky header: applies site-wide */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(255,255,255,.8);
+  -webkit-backdrop-filter: saturate(180%) blur(8px);
+  backdrop-filter: saturate(180%) blur(8px);
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .site-header { background: #fff; }
+}
+
+/* Dark mode polish */
+@media (prefers-color-scheme: dark) {
+  .site-header {
+    background: rgba(17,24,39,.75);
+    border-bottom-color: rgba(255,255,255,.08);
+  }
+}
+
+/* Nice-to-have: anchor offset so in-page links don’t hide under the header */
+:root { --header-h: 64px; }
+@media (max-width: 640px) { :root { --header-h: 56px; } }
+main [id], :target { scroll-margin-top: var(--header-h); }

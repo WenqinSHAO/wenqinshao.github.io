@@ -18,7 +18,8 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 
-title: Wenqin's Snow River Notes 钓雪记
+title: Snow River Notes 钓雪记
+author: Wenqin Shao (邵文钦)
 description: >- # this means to ignore newlines until "baseurl:"  
   A blog about life in AI.
 baseurl: "" # the subpath of your site, e.g. /blog
@@ -30,10 +31,9 @@ plugins:
   - jekyll-feed
   - jekyll-seo-tag
 
-
-minima:
-  nav_pages:
-    - about.md
+header_pages:
+  - posts.md
+  - bio.md
 
 markdown: kramdown
 kramdown:
