@@ -1,0 +1,57 @@
+{% assign text_lic = page.license | default: site.default_license | downcase %}
+{% assign img_lic  = page.assets_license | default: site.assets_default_license | downcase %}
+
+<div class="post-license" style="font-size:.9rem;opacity:.85;margin:.75rem 0 1rem">
+  {%- comment -%} Text / post license {%- endcomment -%}
+  {%- case text_lic -%}
+    {%- when "cc-by-nc-4.0" -%}
+      Text licensed under <a rel="license" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>.
+    {%- when "cc-by-4.0" -%}
+      Text licensed under <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+    {%- when "cc-by-nc-nd-4.0" -%}
+      Text licensed under <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">CC BY-NC-ND 4.0</a>.
+    {%- when "all-rights" -%}
+      © {{ page.date | date: "%Y" }} {{ site.author.name | default: site.title }}. All rights reserved.
+    {%- else -%}
+      {{ text_lic }}
+  {%- endcase -%}
+
+  {%- if img_lic -%}
+    <br/>
+    {%- comment -%} Images / illustrations license {%- endcomment -%}
+    {%- case img_lic -%}
+      {%- when "all-rights" -%}
+        Images/illustrations: © {{ page.date | date: "%Y" }} {{ site.author.name | default: site.title }}. All rights reserved.
+      {%- when "cc-by-nc-4.0" -%}
+        Images/illustrations: <a rel="license" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>.
+      {%- when "cc-by-4.0" -%}
+        Images/illustrations: <a rel="license" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+      {%- when "cc-by-nc-nd-4.0" -%}
+        Images/illustrations: <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">CC BY-NC-ND 4.0</a>.
+      {%- else -%}
+        Images/illustrations: {{ img_lic }}
+    {%- endcase -%}
+  {%- endif -%}
+
+  {%- if site.code_license -%}
+    <br/>Code examples: {{ site.code_license }} (unless otherwise noted).
+  {%- endif -%}
+</div>
+
+{%- assign needs_permission = false -%}
+{%- if img_lic == 'all-rights' or text_lic == 'all-rights' -%}
+  {%- assign needs_permission = true -%}
+{%- endif -%}
+
+{%- if needs_permission -%}
+  <div class="license-permissions" style="margin-top:.35rem;opacity:.85">
+    For reprints or commercial use,
+    {%- if site.permissions_url -%}
+      <a href="{{ site.permissions_url | relative_url }}">contact me</a>.
+    {%- elsif site.email -%}
+      <a href="mailto:{{ site.email }}?subject={{ 'Permission request: ' | append: page.title | uri_escape }}&body={{ page.url | absolute_url | uri_escape }}">email me</a>.
+    {%- else -%}
+      please get in touch via the footer links.
+    {%- endif -%}
+  </div>
+{%- endif -%}
