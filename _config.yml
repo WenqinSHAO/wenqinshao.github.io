@@ -40,6 +40,7 @@ header_pages:
 markdown: kramdown
 kramdown:
    input: GFM
+   math_engine: katex
 
 # show excerpts on the home page (we also enforce it in our layout below)
 show_excerpts: true
