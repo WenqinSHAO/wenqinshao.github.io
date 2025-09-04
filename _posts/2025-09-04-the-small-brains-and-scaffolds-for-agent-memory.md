@@ -231,7 +231,7 @@ These materially change how much context the LLM can internally carry, while our
 
 ---
 
-### The last catch
+## The last catch
 
 * Keep the **RW‑Policy** small and learnable; keep the **shim + extractor** boring, fast, and inspectable.
 * Use **Anthropic’s retrieval recipe** to lock in immediate wins; **unify** MUs and **route** a single, cost‑aware reward.
