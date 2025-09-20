@@ -23,7 +23,7 @@ permalink: /bio/
   </div>
 </div>
 
-## Hi, I’m Wenqin (文钦)
+## Hi, I’m Wenqin (邵文钦)
 
 I build data‑driven systems where networking meets AI. I care about sharp problem statements, small useful tools, and teams that learn together. Outside work, I run, paint, and keep experimenting.
 

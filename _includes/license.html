@@ -45,11 +45,11 @@
 
 {%- if needs_permission -%}
   <div class="license-permissions" style="margin-top:.35rem;opacity:.85">
-    For reprints or commercial use,
+    For leaving comments, reprints,commercial use, 
     {%- if site.permissions_url -%}
       <a href="{{ site.permissions_url | relative_url }}">contact me</a>.
     {%- elsif site.email -%}
-      <a href="mailto:{{ site.email }}?subject={{ 'Permission request: ' | append: page.title | uri_escape }}&body={{ page.url | absolute_url | uri_escape }}">email me</a>.
+      <a href="mailto:{{ site.email }}?subject={{ 'Permission request: ' | append: page.title | uri_escape }}&body={{ page.url | absolute_url | uri_escape }}"> email me</a>.
     {%- else -%}
       please get in touch via the footer links.
     {%- endif -%}
