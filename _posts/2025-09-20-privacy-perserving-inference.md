@@ -12,7 +12,6 @@ date: 2025-09-20
 ![SCX’s stateless inference]({{ site.baseurl }}/assets/images/ChatGPT-whisper.png)
 <p align="center"><em>Whispering encrypted prayers into the cloud, receiving divine answers only the faithful can decode.</em></p>
 
-
 说实话，我对密码学、隐私保护本身是一窍不通。但这个问题很打动我。以前没太在意个人数据，觉得“无所谓”。可自己用 LLM 越多，越意识到数字世界里的“我”早就活在云上，而且可能比现实里的我还完整。自己瞎想做外挂记忆系统，其实就是想把一部分阅读、对话、写作的痕迹放在可控的外部存储里，留给自己用。
 
 而 SCX 走得更远：它想用云端的大模型和算力，但一点都不泄露用户的数据。这个需求对于个人和企业都是真实存在的。但我判断短时间内，这类隐私保护推理可能不会成为主流，因为：
