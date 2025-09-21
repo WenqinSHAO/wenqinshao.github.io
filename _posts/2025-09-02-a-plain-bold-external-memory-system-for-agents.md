@@ -250,6 +250,6 @@ GET /memory/read?q=failed+webhook&top_k=8&privacy=team&time=2025-07..2025-08
 
 ---
 
-## Last catch
+## The last catch
 
 Treat memory as a **system resource** and close the loop across **schema → index → learning → interfaces → governance → ops**. Here the focus is more on the external layer delivers quick wins on cost and auditability; MemOS/MemCube offers a broader unification. They are complementary—together moving us toward **steadier, cheaper, more auditable** agent memory system design.
