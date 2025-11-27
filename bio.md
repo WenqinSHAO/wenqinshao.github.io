@@ -42,4 +42,6 @@ I build data‑driven systems where networking meets AI. I care about sharp prob
 <ul class="link-list">
   <li>GitHub: <a href="https://github.com/WenqinSHAO" rel="me">github.com/WenqinSHAO</a></li>
   <li>LinkedIn: <a href="https://www.linkedin.com/in/shaowq/" rel="me">linkedin.com/in/shaowq</a></li>
+  <li>CV: <a href="{{ site.baseurl }}/assets/docs/CV_eng_eng.pdf" download="full CV">Download link</a>
+</li>
 </ul>
