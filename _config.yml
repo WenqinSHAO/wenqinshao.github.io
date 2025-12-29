@@ -29,9 +29,6 @@ url: "https://wenqinshao.github.io" # the base hostname & protocol for your site
 
 # SEO Settings
 lang: en_US
-twitter:
-  username: wenqinshao # Add your Twitter username if you have one
-  card: summary
 social:
   name: Wenqin Shao
   links:
