@@ -9,4 +9,16 @@
   {%- if jekyll.environment == 'production' and site.google_analytics -%}
     {%- include google-analytics.html -%}
   {%- endif -%}
+  
+  <!-- Mermaid.js for diagrams -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ 
+      startOnLoad: true,
+      theme: 'default',
+      themeVariables: {
+        fontSize: '16px'
+      }
+    });
+  </script>
 </head>
