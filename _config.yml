@@ -34,6 +34,9 @@ social:
   links:
     - https://github.com/wenqinshao # Add your social media links
 
+# Google Analytics
+google_analytics: G-MT8X9RM4LW
+
 # Build settings
 theme: minima
 plugins:
