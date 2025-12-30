@@ -7,7 +7,7 @@
   <!-- Canonical URL -->
   <link rel="canonical" href="{{ page.url | replace:'index.html','' | absolute_url }}">
   
-  <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}">
+  <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}?v={{ site.github.build_revision | default: site.time | date: '%s' }}">
   <link rel="shortcut icon" type="image/png" href="/favicon.png">
   <!-- KaTeX for math -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-5aQy+xhQJcR9qik6hTFAPC0ORCzJ4vcDdoYVDzSlENvUxm5W3RoqeVpG36E6C0rI" crossorigin="anonymous">

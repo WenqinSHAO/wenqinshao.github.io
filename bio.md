@@ -4,20 +4,9 @@ title: Wenqin's bio
 permalink: /bio/
 ---
 
-<style>
-  /* Lightweight polish that plays nicely with Minima */
-  .about-hero { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.25rem; }
-  .about-hero .avatar { width: 140px; height: 140px; border-radius: 16px; object-fit: cover; box-shadow: 0 6px 16px rgba(0,0,0,.08); border: 1px solid rgba(0,0,0,.06); }
-  .about-hero .tagline { font-size: 1rem; line-height: 1.5; }
-  @media (max-width: 640px) { .about-hero { flex-direction: column; text-align: center; } }
-  .link-list { list-style: none; padding-left: 0; }
-  .link-list li { margin: .25rem 0; }
-  .cv-list li { margin-bottom: .35rem; }
-</style>
-
 <div class="about-hero">
   <!-- Update the src to match where you place the image in your repo -->
-  <img src="{{ site.baseurl }}/assets/images/id_watercolor.jpeg" alt="Wenqin Shao – self‑portrait" class="avatar">
+  <img src="{{ "/assets/images/id_watercolor.jpeg" | relative_url }}" alt="Wenqin Shao – self‑portrait" class="avatar">
   <div class="tagline">
     Learning by doing in AI · runner · servant leader · connector of people &amp; ideas (with a soft spot for queueing) · watercolor on weekends · 华为人 · ex‑Cisco · ex‑Google
   </div>
