@@ -1,9 +1,26 @@
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id={{ site.google_analytics }}"></script>
+{% comment %}
+  Google Analytics: only load in production, on the expected hostname, and when DNT is off.
+  The `head.html` include already gates on `jekyll.environment == 'production'`,
+  this is a defensive runtime guard for forks/previews.
+{% endcomment %}
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  (function() {
+    const measurementId = "{{ site.google_analytics }}";
+    if (!measurementId) return;
 
-  gtag('config', '{{ site.google_analytics }}');
+    const expectedHost = "{{ site.url | replace: 'https://', '' | replace: 'http://', '' | split: '/' | first }}";
+    const dntEnabled = navigator.doNotTrack === "1" || window.doNotTrack === "1" || navigator.msDoNotTrack === "1";
+    if (dntEnabled || location.hostname !== expectedHost) return;
+
+    const gtagScript = document.createElement('script');
+    gtagScript.async = true;
+    gtagScript.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+    document.head.appendChild(gtagScript);
+
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    window.gtag = gtag;
+    gtag('js', new Date());
+    gtag('config', measurementId);
+  })();
 </script>
