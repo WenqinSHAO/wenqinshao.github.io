@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Self-hosted search within Claude Code
+title: Self-hosted Web search within Claude Code
 date: 2026-03-01
 ---
 
