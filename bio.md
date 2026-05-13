@@ -8,7 +8,7 @@ permalink: /bio/
   <!-- Update the src to match where you place the image in your repo -->
   <img src="{{ "/assets/images/id_watercolor.jpeg" | relative_url }}" alt="Wenqin Shao – self‑portrait" class="avatar">
   <div class="tagline">
-    Learning by doing in AI · runner · servant leader · connector of people &amp; ideas (with a soft spot for queueing) · watercolor on weekends · 华为人 · ex‑Cisco · ex‑Google
+      Learning by doing · runner · connector of people & ideas · 乐衷于搞抽象 <br> 华为人 · ex‑Cisco · ex‑Google 
   </div>
 </div>
 
