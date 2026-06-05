@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NVIDIA Research → Product Pipeline (2020-2026)</title>
+<style>
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:'Georgia','Times New Roman',serif;color:#333;background:#F5F6F8;line-height:1.7}
+
+/* ===== SIDEBAR NAV ===== */
+.sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;background:#1A1A1A;color:#ccc;overflow-y:auto;z-index:100;display:flex;flex-direction:column;padding:0}
+.sidebar-header{padding:24px 20px 16px;border-bottom:1px solid #333}
+.sidebar-header .report-label{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#76B900;margin-bottom:4px}
+.sidebar-header h2{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:15px;font-weight:600;color:#fff;line-height:1.3}
+.sidebar-nav{flex:1;padding:12px 0}
+.sidebar-nav a{display:block;padding:8px 20px;color:#999;text-decoration:none;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:13px;border-left:3px solid transparent;transition:all .15s}
+.sidebar-nav a:hover{color:#fff;background:#252525}
+.sidebar-nav a.active{color:#76B900;border-left-color:#76B900;background:#222}
+.sidebar-nav a .nav-num{display:inline-block;width:22px;font-weight:600;font-size:11px;color:#666}
+.sidebar-nav a.active .nav-num{color:#76B900}
+.sidebar-footer{padding:16px 20px;border-top:1px solid #333;font-size:11px;color:#555;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+
+/* ===== MAIN CONTENT ===== */
+.main{margin-left:236px;max-width:880px;padding:0 48px 80px}
+
+/* ===== HERO ===== */
+.hero{background:linear-gradient(135deg,#1A1A1A 0%,#1a2a10 50%,#0d1a00 100%);color:#fff;padding:64px 0 48px;margin-bottom:48px;border-bottom:4px solid #76B900;text-align:center}
+.hero h1{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:36px;font-weight:700;line-height:1.2;margin-bottom:8px}
+.hero h1 .green{color:#76B900}
+.hero .subtitle{font-size:18px;color:#aaa;margin-bottom:28px;font-style:italic}
+.hero-metrics{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.hero-metric{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:12px 18px;text-align:center;min-width:100px}
+.hero-metric .metric-value{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:24px;font-weight:700;color:#76B900}
+.hero-metric .metric-label{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:#999;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+.hero-date{font-size:12px;color:#666;margin-top:20px;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+
+/* ===== SECTIONS ===== */
+section{margin-bottom:56px}
+.section-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #E1E4E8}
+.section-num{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;font-weight:700;color:#76B900;background:#EEF5DD;padding:4px 10px;border-radius:4px;white-space:nowrap;margin-top:4px}
+.section-head h2{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:26px;font-weight:700;color:#1A1A1A;line-height:1.2}
+.section-head h3{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:20px;font-weight:600;color:#333;margin-top:32px;margin-bottom:12px}
+.section-head h4{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:16px;font-weight:600;color:#444;margin-top:24px;margin-bottom:8px}
+.section-head p{margin-bottom:14px;font-size:17px}
+.section-head ul,.section-head ol{margin-left:24px;margin-bottom:14px}
+.section-head li{margin-bottom:6px;font-size:16px}
+
+/* ===== FIGURES ===== */
+figure{margin:28px 0;text-align:center}
+figure img{max-width:100%;height:auto;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,.08);border:1px solid #E1E4E8;cursor:pointer;transition:transform .15s}
+figure img:hover{transform:scale(1.01)}
+figcaption{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:13px;color:#888;margin-top:8px;font-style:italic}
+
+/* ===== TABLES ===== */
+.table-wrap{overflow-x:auto;margin:20px 0}
+table{width:100%;border-collapse:collapse;font-size:14px;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.05);border:1px solid #E1E4E8}
+thead{background:#1A1A1A;color:#fff}
+thead th{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.6px;padding:10px 14px;text-align:left}
+tbody td{padding:9px 14px;border-bottom:1px solid #E1E4E8}
+tbody tr:nth-child(even){background:#FAFBFC}
+tbody tr:hover{background:#F0F4E8}
+td.num{font-family:'SF Mono','Fira Code','Consolas',monospace;text-align:right;font-weight:600}
+td.rate{font-family:'SF Mono','Fira Code','Consolas',monospace;text-align:right;color:#009E73;font-weight:600}
+
+/* ===== CALLOUT BOXES ===== */
+.callout{padding:16px 20px;margin:20px 0;border-left:4px solid #009E73;background:#F0FAF6;border-radius:0 6px 6px 0;font-size:14px}
+.callout.warning{border-left-color:#D55E00;background:#FFF8F0}
+.callout.info{border-left-color:#4A90D9;background:#F0F5FB}
+.callout strong{display:block;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;color:#555}
+
+/* ===== STAT CARDS ===== */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:20px 0}
+.stat-card{background:#fff;border:1px solid #E1E4E8;border-radius:8px;padding:16px 18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.stat-card .stat-val{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:28px;font-weight:700;color:#1A1A1A}
+.stat-card .stat-val.green{color:#76B900}
+.stat-card .stat-val.teal{color:#009E73}
+.stat-card .stat-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#888;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;margin-top:2px}
+
+/* ===== PIPELINE FLOW ===== */
+.pipeline{display:flex;gap:0;margin:24px 0;flex-wrap:wrap}
+.pipeline-stage{flex:1;min-width:140px;background:#fff;border:1px solid #E1E4E8;border-radius:8px;padding:18px 16px;text-align:center;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.pipeline-stage .stage-num{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:28px;font-weight:800;color:#76B900;opacity:.3;margin-bottom:4px}
+.pipeline-stage .stage-title{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:13px;font-weight:700;color:#1A1A1A;margin-bottom:6px}
+.pipeline-stage .stage-desc{font-size:12px;color:#666;line-height:1.4}
+.pipeline-arrow{display:flex;align-items:center;padding:0 4px;color:#76B900;font-size:20px;font-weight:700}
+
+/* ===== RESEARCHER CARDS ===== */
+.researcher-grid{display:grid;grid-template-columns:1fr;gap:16px;margin:20px 0}
+.researcher-card{background:#fff;border:1px solid #E1E4E8;border-radius:8px;padding:20px 22px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.researcher-card .r-header{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.r-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#1A1A1A,#444);display:flex;align-items:center;justify-content:center;color:#76B900;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:18px;font-weight:700;flex-shrink:0}
+.r-name{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:17px;font-weight:700;color:#1A1A1A}
+.r-meta{font-size:12px;color:#888;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.badge.direct{background:#E0F5EE;color:#007A55}
+.badge.moderate{background:#FFF3E0;color:#B26500}
+.badge.nvidia{background:#E8F5E0;color:#5A8A00}
+.badge.academic{background:#FFF8E0;color:#B28000}
+.r-papers{list-style:none;font-size:13px;color:#555;line-height:1.5}
+.r-papers li{margin-bottom:2px;padding:2px 0;font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px}
+.r-papers li .paper-id{color:#666}
+.r-pattern{font-size:13px;color:#666;font-style:italic;margin-top:8px}
+
+/* ===== TIMELINE ===== */
+.timeline{position:relative;padding-left:28px;margin:20px 0}
+.timeline::before{content:'';position:absolute;left:8px;top:4px;bottom:4px;width:3px;background:#E1E4E8;border-radius:2px}
+.tl-phase{position:relative;margin-bottom:20px}
+.tl-phase::before{content:'';position:absolute;left:-24px;top:6px;width:13px;height:13px;border-radius:50%;background:#76B900;border:3px solid #D4EDAA}
+.tl-phase .tl-title{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-weight:700;font-size:15px;color:#1A1A1A;margin-bottom:2px}
+.tl-phase .tl-body{font-size:14px;color:#555}
+
+/* ===== ECOSYSTEM CARDS ===== */
+.eco-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.eco-card{background:#fff;border:1px solid #E1E4E8;border-radius:8px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.eco-card h5{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;font-weight:700;color:#1A1A1A;margin-bottom:6px}
+.eco-card p{font-size:13px;color:#555;line-height:1.5}
+
+/* ===== FOOTER ===== */
+.report-footer{border-top:2px solid #E1E4E8;padding-top:24px;margin-top:40px;font-size:12px;color:#888;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+.report-footer a{color:#76B900;text-decoration:none}
+.report-footer a:hover{text-decoration:underline}
+
+/* ===== KEY TAKEAWAYS ===== */
+.takeaway-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.takeaway-card{background:#fff;border-top:4px solid #76B900;border-radius:6px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.takeaway-card .tk-num{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:32px;font-weight:800;color:#76B900;opacity:.25;line-height:1;margin-bottom:4px}
+.takeaway-card .tk-title{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;font-weight:700;color:#1A1A1A;margin-bottom:4px}
+.takeaway-card .tk-body{font-size:13px;color:#555;line-height:1.5}
+
+/* ===== BACK TO TOP ===== */
+.back-to-top{position:fixed;bottom:24px;right:24px;width:40px;height:40px;border-radius:50%;background:#76B900;color:#fff;border:none;cursor:pointer;font-size:20px;display:none;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(118,185,0,.3);z-index:200;transition:opacity .2s}
+.back-to-top.visible{display:flex}
+
+/* ===== LIGHTBOX ===== */
+.lightbox{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);z-index:999;align-items:center;justify-content:center;cursor:pointer}
+.lightbox.show{display:flex}
+.lightbox img{max-width:92%;max-height:92%;border-radius:4px}
+
+/* ===== SYNTHESIS BOX ===== */
+.synthesis-box{background:linear-gradient(135deg,#1A1A1A,#1a2a10);color:#ddd;padding:24px 28px;border-radius:8px;margin:24px 0;border-left:4px solid #76B900}
+.synthesis-box h4{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:#76B900;font-size:14px;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.synthesis-box p{font-size:15px;line-height:1.7}
+
+/* ===== CODE/ID STYLING ===== */
+.paper-ref{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:13px;color:#555;background:#f0f0f0;padding:1px 5px;border-radius:3px}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .sidebar{position:relative;width:100%;height:auto;max-height:40vh}
+  .main{margin-left:0;padding:0 20px 60px}
+  .hero{padding:36px 0 28px}
+  .hero h1{font-size:24px}
+  .hero .subtitle{font-size:15px}
+  .hero-metrics{gap:8px}
+  .hero-metric{padding:8px 12px;min-width:70px}
+  .hero-metric .metric-value{font-size:18px}
+  .eco-grid{grid-template-columns:1fr}
+  .takeaway-grid{grid-template-columns:1fr}
+  .pipeline{flex-direction:column}
+  .pipeline-arrow{transform:rotate(90deg);justify-content:center;padding:4px 0}
+}
+@media print{
+  .sidebar,.back-to-top{display:none!important}
+  .main{margin-left:0;padding:0}
+  .hero{background:#fff!important;color:#000!important;border-bottom:2px solid #000;padding:20px 0}
+  .hero h1 .green{color:#000}
+  .hero-metric{background:#f5f5f5;border:1px solid #ccc}
+  .hero-metric .metric-value{color:#000}
+  figure img{box-shadow:none}
+  section{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="report-label">Tech Report · 2026-06-05</div>
+    <h2>NVIDIA Research<br>→ Product Pipeline</h2>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="#s1"><span class="nav-num">1</span> Methodology & Scope</a>
+    <a href="#s2"><span class="nav-num">2</span> Domain Landscape</a>
+    <a href="#s3"><span class="nav-num">3</span> Academic Collaboration</a>
+    <a href="#s4"><span class="nav-num">4</span> Product Transfer</a>
+    <a href="#s5"><span class="nav-num">5</span> Researcher Profiles</a>
+    <a href="#s6"><span class="nav-num">6</span> Product Transfer Stories</a>
+    <a href="#s7"><span class="nav-num">7</span> GPT Moment Shift</a>
+    <a href="#s8"><span class="nav-num">8</span> Key Takeaways</a>
+    <a href="#appendix" style="font-size:11px;padding-left:28px">Appendix</a>
+  </nav>
+  <div class="sidebar-footer">Dataset: 891 papers<br>3,678 blog posts · 14 domains</div>
+</aside>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="main">
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <h1><span class="green">NVIDIA Research</span> → Product Pipeline</h1>
+  <p class="subtitle">How Academia Fuels NVIDIA's Technology Ecosystem (2020-2026)</p>
+  <div class="hero-metrics">
+    <div class="hero-metric"><div class="metric-value">891</div><div class="metric-label">Research Papers</div></div>
+    <div class="hero-metric"><div class="metric-value">56</div><div class="metric-label">Verified Transfers</div></div>
+    <div class="hero-metric"><div class="metric-value">14</div><div class="metric-label">Research Domains</div></div>
+    <div class="hero-metric"><div class="metric-value">3,678</div><div class="metric-label">Blog Posts Analyzed</div></div>
+  </div>
+  <div class="hero-date">Generated 2026-06-05 · Calibrated transfer evidence via agent-reviewed three-stage pipeline</div>
+</header>
+
+<!-- ===== SECTION 1: METHODOLOGY ===== -->
+<section id="s1">
+<div class="section-head">
+  <span class="section-num">§1</span>
+  <h2>Methodology & Scope</h2>
+</div>
+
+<h3>1.1 Data Scope</h3>
+<p>This report analyzes NVIDIA's research-to-product pipeline using three linked data sources:</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Source</th><th>Description</th><th>Coverage</th></tr></thead>
+<tbody>
+<tr><td><strong>Research papers</strong></td><td>Papers scraped from <code>research.nvidia.com</code>, enriched with research areas, venues, and author affiliations</td><td>891 papers (2020-2026), tagged <code>nvidia-research</code></td></tr>
+<tr><td><strong>Technical blog posts</strong></td><td>All posts discovered via the NVIDIA Technical Blog Atom feed</td><td>3,678 posts (2020-2026)</td></tr>
+<tr><td><strong>Transfer evidence</strong></td><td>Paper-blog matches verified through agent-based content review</td><td>56 papers → 53 blogs → 71 verified links</td></tr>
+</tbody>
+</table>
+</div>
+<p>Papers are tagged with 31 research areas mapped to 14 domains. The GPT moment (late 2022) is used as the temporal split: <strong>pre-GPT</strong> (2020-2022) vs <strong>post-GPT</strong> (2023-2026).</p>
+
+<h3>1.2 How We Qualify a Product Transfer</h3>
+<p>The central methodological challenge is distinguishing genuine research-to-product transfer from mere researcher visibility. We apply a <strong>three-stage filtering pipeline</strong>:</p>
+
+<div class="pipeline">
+  <div class="pipeline-stage">
+    <div class="stage-num">1</div>
+    <div class="stage-title">Heuristic Match</div>
+    <div class="stage-desc">Cross-reference 891 papers × 3,678 blogs via author overlap, title phrases, and project names.<br><strong>→ 442 candidate pairs</strong></div>
+  </div>
+  <div class="pipeline-arrow">→</div>
+  <div class="pipeline-stage">
+    <div class="stage-num">2</div>
+    <div class="stage-title">Title-Match Gate</div>
+    <div class="stage-desc">Require blog to contain a 5+ word phrase from the paper title. Eliminates 373 author-only matches.<br><strong>→ 69 papers pass</strong></div>
+  </div>
+  <div class="pipeline-arrow">→</div>
+  <div class="pipeline-stage">
+    <div class="stage-num">3</div>
+    <div class="stage-title">Agent Content Review</div>
+    <div class="stage-desc">Fetch 70 blog URLs, apply human-caliber judgment: genuine transfer vs roundup/award/tutorial. Assign DIRECT or MODERATE strength.<br><strong>→ 56 verified papers</strong></div>
+  </div>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-val green">56</div><div class="stat-lbl">Verified Papers (6.3%)</div></div>
+  <div class="stat-card"><div class="stat-val">53</div><div class="stat-lbl">Unique Blogs</div></div>
+  <div class="stat-card"><div class="stat-val teal">40</div><div class="stat-lbl">Direct Transfers</div></div>
+  <div class="stat-card"><div class="stat-val" style="color:#E69F00">18</div><div class="stat-lbl">Moderate Transfers</div></div>
+</div>
+
+<h3>1.3 Why This Approach Works</h3>
+<p>The three-stage design addresses a fundamental signal-to-noise problem. Author name overlap is common — NVIDIA researchers who blog frequently create hundreds of false-positive associations. Title phrase matching is rare but reliable: when a blog contains a 5+ word phrase from a paper title, it virtually always discusses that paper. Agent review resolves the remaining edge cases: conference roundup posts ("NVIDIA Presents 20 Papers at NeurIPS"), award announcements, and community tutorials that match paper titles by coincidence.</p>
+<p>The <strong>7.9× reduction</strong> from 442 to 56 papers is not data loss — it is noise removal. The 56 remaining papers represent the defensible set of research-to-product transfers for which we have direct blog evidence.</p>
+
+<div class="callout warning">
+<strong>Caveats</strong>
+This methodology captures transfers that surface on the NVIDIA Technical Blog. It misses: research that ships in products without blog coverage (common for GPU architecture), transfer through other channels (GTC talks, documentation, product release notes), non-English communication, and research that influences product direction without direct citation.
+</div>
+
+<div class="table-wrap" style="margin-top:20px">
+<table>
+<thead><tr><th>Section</th><th>Content</th><th>Charts</th></tr></thead>
+<tbody>
+<tr><td>2. Domain Landscape</td><td>Research portfolio composition and evolution</td><td class="num">5</td></tr>
+<tr><td>3. Academic Collaboration</td><td>Who leads research, top partners, domain participation</td><td class="num">4</td></tr>
+<tr><td>4. Product Transfer</td><td>Verified transfer evidence, products, scholars, trends</td><td class="num">5</td></tr>
+<tr><td>5. Researcher Profiles</td><td>Top transfer scholars: affiliations, work, impact</td><td class="num">—</td></tr>
+<tr><td>6. Product Transfer Stories</td><td>Deep dives: Isaac, Dev Tools, NeMo, CUDA+GPU</td><td class="num">—</td></tr>
+<tr><td>7. GPT Moment Shift</td><td>Pre/post-2022 comparison across all dimensions</td><td class="num">—</td></tr>
+<tr><td>8. Key Takeaways</td><td>Synthesis and implications</td><td class="num">—</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ===== SECTION 2: DOMAIN LANDSCAPE ===== -->
+<section id="s2">
+<div class="section-head">
+  <span class="section-num">§2</span>
+  <h2>Domain Landscape</h2>
+</div>
+
+<h3>2.1 Portfolio Composition</h3>
+<p>NVIDIA's research portfolio spans 14 domains. <strong>AI & Machine Learning</strong> dominates at 451 papers — more than the next two domains combined.</p>
+
+<figure>
+  <img src="figures/domain_static_distribution.png" alt="Domain Static Distribution" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>Figure 1: Domain static distribution — horizontal bar chart with pre/post GPT split</figcaption>
+</figure>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Domain</th><th class="num">Papers</th><th class="num">Share</th></tr></thead>
+<tbody>
+<tr><td>AI & Machine Learning</td><td class="num">451</td><td class="rate">50.6%</td></tr>
+<tr><td>Computer Vision</td><td class="num">246</td><td class="rate">27.6%</td></tr>
+<tr><td>Foundation Models</td><td class="num">219</td><td class="rate">24.6%</td></tr>
+<tr><td>Robotics & Autonomous</td><td class="num">219</td><td class="rate">24.6%</td></tr>
+<tr><td>Graphics & Rendering</td><td class="num">213</td><td class="rate">23.9%</td></tr>
+<tr><td>GPU Architecture</td><td class="num">158</td><td class="rate">17.7%</td></tr>
+<tr><td>CUDA Ecosystem</td><td class="num">75</td><td class="rate">8.4%</td></tr>
+<tr><td>Applied Perception</td><td class="num">73</td><td class="rate">8.2%</td></tr>
+<tr><td>Simulation & HPC</td><td class="num">47</td><td class="rate">5.3%</td></tr>
+<tr><td>Interconnect & Networking</td><td class="num">26</td><td class="rate">2.9%</td></tr>
+</tbody>
+</table>
+</div>
+<p style="font-size:13px;color:#888;font-style:italic">Papers may belong to multiple domains; percentages sum above 100%.</p>
+
+<h3>2.2 Temporal Evolution</h3>
+<figure>
+  <img src="figures/domain_temporal_stacked_area.png" alt="Domain Temporal Stacked Area" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>Figure 2: Stacked area chart — domain composition by year, GPT-3.5/ChatGPT demarcation at 2022.5</figcaption>
+</figure>
+<p>The domain landscape shifted dramatically after late 2022. <strong>Foundation Models</strong> exploded from 58 pre-GPT papers to 161 post-GPT (+178%). <strong>GPU Architecture</strong> shows the mirror image — declining from 116 to 42. Section 2.5 shows this decline correlates with a shift toward arxiv and away from traditional architecture conferences; whether this reflects reduced investment, publication venue preference, or classification changes is not distinguishable from the data alone.</p>
+
+<h3>2.3 GPT Moment Shift by Domain</h3>
+<figure>
+  <img src="figures/domain_gpt_shift.png" alt="Domain GPT Shift Scatter" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>Figure 3: Scatter plot — each domain as a point (pre vs post-GPT count), biggest movers annotated</figcaption>
+</figure>
+<p>Foundation Models gained 103 papers between eras — the single largest domain-level shift. Applied Perception also showed strong growth (+117%), driven by latency perception and esports research. GPU Architecture was the notable decliner (-64%), alongside a modest reduction in CUDA Ecosystem work.</p>
+
+<h3>2.4 Key Domain Trajectories</h3>
+<figure>
+  <img src="figures/domain_key_trends.png" alt="Domain Key Trends" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>Figure 4: Line chart — seven signature domains tracked annually</figcaption>
+</figure>
+<div class="eco-grid">
+  <div class="eco-card"><h5>Foundation Models ↗</h5><p>Hockey-stick curve — flat through 2020-2022, then steep climb to 45-52/year</p></div>
+  <div class="eco-card"><h5>GPU Architecture ↘</h5><p>Strong 2020-2022 peak (40-42/year), then sharp decline to 6-23/year</p></div>
+  <div class="eco-card"><h5>AI & ML, CV, Graphics →</h5><p>Steady, resilient — forming NVIDIA's research backbone</p></div>
+  <div class="eco-card"><h5>Robotics →</h5><p>Consistent across all years without dramatic swings</p></div>
+</div>
+
+<h3>2.5 Venue × Domain Landscape</h3>
+<figure>
+  <img src="figures/domain_venue_heatmap.png" alt="Domain Venue Heatmap" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>Figure 5: Heatmap — top 15 domains × top 10 publication venues</figcaption>
+</figure>
+<p>NVIDIA publishes each domain through distinct venue clusters: AI & ML concentrates in NeurIPS and ICML, Computer Vision in CVPR and ICCV, Graphics in SIGGRAPH, and Robotics in CoRL and ICRA. GPU Architecture stands out for its reliance on arxiv — fewer traditional architecture conference publications post-2022.</p>
+</section>
+
+<!-- ===== SECTION 3: ACADEMIC COLLABORATION ===== -->
+<section id="s3">
+<div class="section-head">
+  <span class="section-num">§3</span>
+  <h2>Academic Collaboration</h2>
+</div>
+
+<h3>3.1 Who Leads?</h3>
+<figure>
+  <img src="figures/collaboration_lead_pie.png" alt="Collaboration Lead Pie" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>Figure 6: Pie chart — NVIDIA-led vs Academic-led vs Unknown first authorship</figcaption>
+</figure>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-val green">87.9%</div><div class="stat-lbl">NVIDIA First-Authored (774/881)</div></div>
+  <div class="stat-card"><div class="stat-val" style="color:#E69F00">12.1%</div><div class="stat-lbl">Academic First-Authored (107)</div></div>
+  <div class="stat-card"><div class="stat-val">8.2%</div><div class="stat-lbl">Solo NVIDIA (72 papers)</div></div>
+  <div class="stat-card"><div class="stat-val teal">92%</div><div class="stat-lbl">With Academic Co-authors (809)</div></div>
+</div>
+<p>Only 72 papers (8.2%) are solo NVIDIA with no external co-authors — the vast majority involve academic partners, but NVIDIA overwhelmingly sets the research agenda.</p>
+
+<h3>3.2 Temporal Stability</h3>
+<figure>
+  <img src="figures/collaboration_temporal_split.png" alt="Collaboration Temporal Split" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>Figure 7: Stacked bars — NVIDIA-led vs Academic-led by year</figcaption>
+</figure>
+<p>The NVIDIA-led to academic-led ratio has been stable across all seven years. The collaboration model is structural and institutionalized — not reactive to AI trends or the GPT moment.</p>
+
+<h3>3.3 Domain Participation</h3>
+<figure>
+  <img src="figures/collaboration_by_domain.png" alt="Collaboration By Domain" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>Figure 8: Grouped horizontal bar — NVIDIA-led vs Academic-led by domain</figcaption>
+</figure>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Domain</th><th class="num">Academic-Led %</th></tr></thead>
+<tbody>
+<tr><td>Medical Imaging</td><td class="rate">33.3% (4/12)</td></tr>
+<tr><td>Foundation Models</td><td class="rate">25.1% (55/219)</td></tr>
+<tr><td>Graphics & Rendering</td><td class="rate">10.8% (23/213)</td></tr>
+<tr><td>Simulation & HPC</td><td class="rate">8.5% (4/47)</td></tr>
+<tr><td>CUDA Ecosystem</td><td class="rate">8.0% (6/75)</td></tr>
+</tbody>
+</table>
+</div>
+<p>Foundation Models is the domain where academia most meaningfully leads — 55 of 219 papers have an academic first author. Applied Perception, Interconnect & Networking, and Quantum Computing have <strong>zero</strong> academic-led papers; NVIDIA fully controls these research directions.</p>
+
+<h3>3.4 Top Academic Partners</h3>
+<figure>
+  <img src="figures/collaboration_top_scholars.png" alt="Collaboration Top Scholars" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>Figure 9: Top 30 academic collaborators ranked by paper count</figcaption>
+</figure>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Scholar</th><th class="num">Papers</th><th>Primary Domain</th></tr></thead>
+<tbody>
+<tr><td>Dieter Fox</td><td class="num">70</td><td>Robotics</td></tr>
+<tr><td>Mark Haoxing Ren</td><td class="num">48</td><td>AI & ML</td></tr>
+<tr><td>Boris Ginsburg</td><td class="num">34</td><td>Foundation Models (Speech)</td></tr>
+<tr><td>Anima Anandkumar</td><td class="num">32</td><td>AI & ML</td></tr>
+<tr><td>Timothy Tsai</td><td class="num">25</td><td>AI & ML</td></tr>
+</tbody>
+</table>
+</div>
+<div class="callout info">
+<strong>Note on Dual Affiliations</strong>
+Several top "academic" collaborators (Dieter Fox, Boris Ginsburg) hold NVIDIA Research director positions alongside university appointments. This reflects dual academic-industry appointments common in NVIDIA Research leadership.
+</div>
+</section>
+
+<!-- ===== SECTION 4: PRODUCT TRANSFER ===== -->
+<section id="s4">
+<div class="section-head">
+  <span class="section-num">§4</span>
+  <h2>Product Transfer</h2>
+</div>
+
+<h3>4.1 Transfer Overview</h3>
+<p>After calibration, <strong>56 of 891 papers</strong> (6.3%) have verified product transfer through the NVIDIA Technical Blog. While this appears modest, it represents documented, defensible transfer — the tip of the iceberg rather than the full extent of research-to-product flow.</p>
+
+<figure>
+  <img src="figures/transfer_evidence_types.png" alt="Transfer Evidence Types" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>Figure 10: Grouped bar — DIRECT vs MODERATE transfers by era</figcaption>
+</figure>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Metric</th><th>Pre-GPT (2020-2022)</th><th>Post-GPT (2023-2026)</th></tr></thead>
+<tbody>
+<tr><td>Papers with transfer</td><td class="num">16</td><td class="num">40</td></tr>
+<tr><td>Transfer rate</td><td class="rate">3.6%</td><td class="rate">9.0%</td></tr>
+<tr><td>Direct transfers</td><td class="num">11</td><td class="num">29</td></tr>
+<tr><td>Moderate transfers</td><td class="num">5</td><td class="num">13</td></tr>
+</tbody>
+</table>
+</div>
+<p>The post-GPT era shows a <strong>2.5× increase</strong> in transfer rate — more research is reaching blogs connected to products.</p>
+
+<h3>4.2 Transfer by Domain</h3>
+<figure>
+  <img src="figures/transfer_by_domain.png" alt="Transfer By Domain" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>Figure 11: Horizontal bar — domains sorted by transfer rate, stacked with/without transfer</figcaption>
+</figure>
+<p>Foundation Models has the highest absolute transfer count (24 papers) and the highest rate among major domains (11.0%). Medical Imaging shows the highest rate overall (16.7%) but from a small base (2/12 papers). <strong>GPU Architecture, despite 158 papers, has zero verified transfers</strong> — GPU research ships silently.</p>
+
+<h3>4.3 Product Landscape</h3>
+<figure>
+  <img src="figures/transfer_top_products.png" alt="Transfer Top Products" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>Figure 12: Top 20 products by associated paper count</figcaption>
+</figure>
+
+<p>Four ecosystems dominate verified transfer:</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Ecosystem</th><th class="num">Papers</th><th>Key Products</th></tr></thead>
+<tbody>
+<tr><td><strong>Isaac</strong></td><td class="num">16</td><td>Isaac Lab (12), Isaac Sim (6), Isaac Gym, Isaac ROS, GR00T</td></tr>
+<tr><td><strong>NeMo</strong></td><td class="num">12</td><td>NeMo (11), Parakeet, SteerLM, Megatron-Core, Minitron</td></tr>
+<tr><td><strong>Dev Tools & CUDA</strong></td><td class="num">23</td><td>CUDA (8), Warp (3), Riva (4), TensorRT (3), Kaolin, Sionna, Reflex, Marco, RTX</td></tr>
+<tr><td><strong>Omniverse/DRIVE</strong></td><td class="num">4</td><td>Omniverse (3), DRIVE Sim (2)</td></tr>
+</tbody>
+</table>
+</div>
+<p style="font-size:13px;color:#888;font-style:italic">Ecosystems overlap: 4 papers appear in both Dev Tools and Isaac, 4 in both Dev Tools and NeMo. Combined unique: 43 of 56 papers. Remaining 13 papers map to Earth-2 (3), Medical AI (4), and standalone transfers.</p>
+
+<h3>4.4 Temporal Transfer Trend</h3>
+<figure>
+  <img src="figures/transfer_temporal.png" alt="Transfer Temporal" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>Figure 13: Dual line — papers published per year vs papers with transfer, GPT demarcation</figcaption>
+</figure>
+<p>Verified transfers show a clear post-GPT acceleration: 16 papers pre-2022 vs 40 post-2022. The 2023 peak (18 papers) coincides with the initial wave of Foundation Model and LLM-related transfers. 2025 maintained momentum with 16 papers.</p>
+
+<h3>4.5 Transfer Scholars</h3>
+<figure>
+  <img src="figures/transfer_scholar_contribution.png" alt="Transfer Scholar Contribution" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>Figure 14: Top 25 scholars by transferred paper count, colored NVIDIA vs academic</figcaption>
+</figure>
+<p>The top verified transfer scholars are a mix of academic collaborators and NVIDIA researchers. Section 5 provides detailed profiles.</p>
+</section>
+
+<!-- ===== SECTION 5: RESEARCHER PROFILES ===== -->
+<section id="s5">
+<div class="section-head">
+  <span class="section-num">§5</span>
+  <h2>Researcher Profiles</h2>
+</div>
+<p>The 56 verified paper transfers cluster around a small set of research leaders. Below are profiles of the <strong>top 10 transfer contributors</strong> — who they are, what they work on, and how their research reached products.</p>
+
+<div class="researcher-grid">
+
+<!-- 5.1 Dieter Fox -->
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">DF</div>
+    <div>
+      <div class="r-name">Dieter Fox</div>
+      <div class="r-meta">Professor, University of Washington · Sr. Director of Robotics Research, NVIDIA <span class="badge academic">Academic</span></div>
+      <div class="r-meta" style="margin-top:4px"><span class="badge direct">7 DIRECT</span> · Senior/last author on all</div>
+    </div>
+  </div>
+  <ul class="r-papers">
+    <li><span class="paper-id">arxiv-2957</span> (2020) Human grasp classification for reactive handovers → <span class="badge direct">Isaac, CUDA</span></li>
+    <li><span class="paper-id">arxiv-2771</span> (2022) <strong>Factory</strong> — GPU-native SDF collision detection, 20,000× speedup → <span class="badge direct">Isaac Gym, PhysX</span></li>
+    <li><span class="paper-id">arxiv-2665</span> (2023) <strong>DeXtreme</strong> — domain-randomized dexterous hand training → <span class="badge direct">Isaac Gym, Omniverse Replicator</span></li>
+    <li><span class="paper-id">rss-0011</span> (2023) <strong>IndustReal</strong> — contact-rich assembly sim-to-real → <span class="badge direct">Isaac Lab, Isaac ROS</span></li>
+    <li><span class="paper-id">rss-0004</span> (2024) <strong>AutoMate</strong> — generalist assembly policies → <span class="badge direct">Isaac Sim, Isaac Lab</span></li>
+    <li><span class="paper-id">corl-0008</span> (2024) <strong>SkillGen</strong> — automated demonstration generation → <span class="badge direct">Isaac Lab</span></li>
+    <li><span class="paper-id">corl-0001</span> (2025) <strong>VT-Refine</strong> — visuo-tactile bimanual assembly → <span class="badge direct">Isaac Lab, Warp, Newton</span></li>
+  </ul>
+  <p class="r-pattern">Fox provides overarching research leadership. Each paper appears at a top venue (RSS, CoRL, NeurIPS) before product integration — a deliberate strategy of academic validation before productization.</p>
+</div>
+
+<!-- 5.2 Mark Haoxing Ren -->
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">MR</div>
+    <div>
+      <div class="r-name">Mark Haoxing Ren</div>
+      <div class="r-meta">Formerly Sr. Research Scientist, NVIDIA · VLSI CAD and EDA <span class="badge academic">Academic</span></div>
+      <div class="r-meta" style="margin-top:4px"><span class="badge moderate">7 MODERATE</span> · Senior author on all</div>
+    </div>
+  </div>
+  <ul class="r-papers">
+    <li><span class="paper-id">ispd-0003/0005</span> (2023) <strong>DREAMPlace/AutoDMP</strong> — GPU-accelerated macro placement → <span class="badge moderate">DREAMPlace, CUDA</span></li>
+    <li><span class="paper-id">arxiv-2641</span> (2023) <strong>ChipNeMo</strong> — domain-adapted LLMs for chip design → <span class="badge moderate">NeMo</span></li>
+    <li><span class="paper-id">arxiv-2585</span> (2024) <strong>DRC-Coder</strong> — automated design rule checking → <span class="badge moderate">Marco</span></li>
+    <li><span class="paper-id">arxiv-2596</span> (2024) <strong>VerilogCoder</strong> — autonomous Verilog generation → <span class="badge moderate">Marco</span></li>
+    <li><span class="paper-id">arxiv-2611</span> (2024) LLM for standard cell layout optimization → <span class="badge moderate">Marco</span></li>
+    <li><span class="paper-id">arxiv-2552</span> (2025) <strong>Marco</strong> — configurable multi-agent framework → <span class="badge moderate">Marco</span></li>
+  </ul>
+  <p class="r-pattern">All MODERATE transfers — feeding into NVIDIA's internal chip-design toolchain. Chia-Tung (Mark) Ho leads implementation as first author.</p>
+</div>
+
+<!-- 5.3 Arash Vahdat -->
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">AV</div>
+    <div>
+      <div class="r-name">Arash Vahdat</div>
+      <div class="r-meta">Sr. Research Scientist, NVIDIA Research <span class="badge nvidia">NVIDIA</span></div>
+      <div class="r-meta" style="margin-top:4px"><span class="badge moderate">5 MODERATE</span> · First author on key diffusion papers</div>
+    </div>
+  </div>
+  <ul class="r-papers">
+    <li><span class="paper-id">neurips-0045</span> (2021), <span class="paper-id">iclr-0033/0034</span> (2022) Score-based generative models, diffusion — cited in "Improving Diffusion Models" blog series → <span class="badge moderate">MODERATE</span></li>
+    <li><span class="paper-id">arxiv-2522</span> (2026) <strong>Proteina-Complexa</strong> — protein binder design → <span class="badge direct">Proteina-Complexa, BioNeMo</span></li>
+  </ul>
+  <p class="r-pattern">Works with Karsten Kreis and Jan Kautz as NVIDIA's core generative AI trio. The 2026 Proteina-Complexa paper represents the newest research-to-product type: generative models applied to drug discovery.</p>
+</div>
+
+<!-- 5.4 Jan Kautz -->
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">JK</div>
+    <div>
+      <div class="r-name">Jan Kautz</div>
+      <div class="r-meta">VP of Learning & Perception Research, NVIDIA <span class="badge nvidia">NVIDIA</span></div>
+      <div class="r-meta" style="margin-top:4px"><span class="badge direct">5 DIRECT</span> · Senior author on all</div>
+    </div>
+  </div>
+  <ul class="r-papers">
+    <li><span class="paper-id">arxiv-2971</span> (2020) <strong>UNAS</strong> — neural architecture search → <span class="badge direct">TensorRT, CUDA</span></li>
+    <li><span class="paper-id">arxiv-3003</span> (2020) Bi3D stereo depth → <span class="badge direct">A100 GPU</span></li>
+    <li><span class="paper-id">arxiv-2614</span> (2024) <strong>Mamba-2-Hybrid</strong> SSM → <span class="badge direct">NeMo, Megatron-Core</span> <em>(1-month cycle)</em></li>
+    <li><span class="paper-id">arxiv-2594</span> (2024) <strong>Minitron</strong> — LLM pruning/distillation → <span class="badge direct">NeMo, TensorRT-LLM</span></li>
+  </ul>
+  <p class="r-pattern">Portfolio spans CV, NAS, SSM architectures, and LLM compression — reflecting oversight across NVIDIA's learning research portfolio. Mamba-2-Hybrid achieved the <strong>fastest turnaround in the dataset: 1 month</strong> from arXiv to NeMo integration.</p>
+</div>
+
+<!-- 5.5 Boris Ginsburg -->
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">BG</div>
+    <div>
+      <div class="r-name">Boris Ginsburg</div>
+      <div class="r-meta">NVIDIA Research Director + university appointment <span class="badge academic">Academic</span></div>
+      <div class="r-meta" style="margin-top:4px"><span class="badge direct">5 DIRECT</span> · Senior author on all</div>
+    </div>
+  </div>
+  <ul class="r-papers">
+    <li><span class="paper-id">arxiv-3026</span> (2020) Cross-language ASR transfer learning → <span class="badge direct">NeMo jump-start training</span></li>
+    <li><span class="paper-id">arxiv-2674</span> (2023) <strong>Fast Conformer</strong> — 2.8× faster training → <span class="badge direct">NeMo Canary</span></li>
+    <li><span class="paper-id">arxiv-2677</span> (2023) <strong>TDT</strong> — token-and-duration transducer → <span class="badge direct">NeMo Parakeet-TDT</span></li>
+    <li><span class="paper-id">arxiv-2645</span> (2023) Long-form audio ASR → <span class="badge direct">NeMo Parakeet</span></li>
+    <li><span class="paper-id">arxiv-2629</span> (2024) ASR confidence estimation → <span class="badge direct">NeMo</span></li>
+  </ul>
+  <p class="r-pattern">Speech research consistently ships in NeMo within 1-12 months. Collaborators Somshubra Majumdar, Jagadeesh Balam, and Vitaly Lavrukhin form the core NeMo speech team.</p>
+</div>
+
+<!-- 5.6 - 5.10 shorter profiles -->
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">KK</div>
+    <div><div class="r-name">Karsten Kreis</div><div class="r-meta">Research Scientist, NVIDIA Research <span class="badge nvidia">NVIDIA</span> · <span class="badge direct">4 DIRECT</span></div></div>
+  </div>
+  <p style="font-size:13px;color:#555">First author on Denoising Diffusion GANs (iclr-0034). Works alongside Vahdat and Kautz in NVIDIA's generative modeling group. All four papers cited in NVIDIA's two-part "Improving Diffusion Models" blog series.</p>
+</div>
+
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">IA</div>
+    <div><div class="r-name">Iretiayo Akinola</div><div class="r-meta">Research Scientist, NVIDIA Research <span class="badge nvidia">NVIDIA</span> · <span class="badge direct">4 DIRECT</span></div></div>
+  </div>
+  <p style="font-size:13px;color:#555">First author on IndustReal (rss-0011) and AutoMate (rss-0004). Focuses on contact-rich assembly sim-to-real transfer. All four papers are DIRECT transfers into the Isaac ecosystem. Collaborates closely with Dieter Fox and the GEAR team.</p>
+</div>
+
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">WY</div>
+    <div><div class="r-name">Wei Yang</div><div class="r-meta">Research Scientist, NVIDIA Research <span class="badge nvidia">NVIDIA</span> · <span class="badge direct">4 DIRECT</span></div></div>
+  </div>
+  <p style="font-size:13px;color:#555">First author on human-to-robot handover research (arxiv-2957) and SynH2R (icra-0004). Bridges CV and robotics — hand-object interaction, bimanual assembly. All papers transfer into Isaac Lab.</p>
+</div>
+
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">YC</div>
+    <div><div class="r-name">Yu-Wei Chao</div><div class="r-meta">Research Scientist, NVIDIA Research <span class="badge nvidia">NVIDIA</span> · <span class="badge direct">4 DIRECT</span></div></div>
+  </div>
+  <p style="font-size:13px;color:#555">First author on Dexplore (corl-0002) and SKT-Hang (icra-0005). Works on semantic keypoints for task understanding and scalable control for dexterous manipulation. All papers transfer into Isaac Lab.</p>
+</div>
+
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">CH</div>
+    <div><div class="r-name">Chia-Tung (Mark) Ho</div><div class="r-meta">Research Scientist, NVIDIA Research <span class="badge nvidia">NVIDIA</span> · <span class="badge moderate">4 MODERATE</span></div></div>
+  </div>
+  <p style="font-size:13px;color:#555">First author on all 4 transferred papers. Lead architect of NVIDIA's Marco multi-agent framework for chip design. Papers form a coherent sequence: DRC checking → Verilog generation → cell layout → unified Marco framework. All MODERATE — research feeding internal design automation.</p>
+</div>
+
+</div><!-- /researcher-grid -->
+
+<h3>Cross-Cutting Patterns</h3>
+<div class="eco-grid">
+  <div class="eco-card"><h5>Collaboration Clusters</h5><p>Three tight research groups dominate transfer: robotics sim-to-real (Fox, Akinola, Yang, Chao), generative AI (Vahdat, Kreis, Kautz), and chip design (Ren, Ho). Boris Ginsburg's speech group is the most self-contained.</p></div>
+  <div class="eco-card"><h5>Academic-Industry Duality</h5><p>Three of the top 10 (Fox, Ren, Ginsburg) are classified as academic yet hold NVIDIA Research leadership roles. Their transferred papers blur the line between academic publication and product development.</p></div>
+  <div class="eco-card"><h5>First-Author Dynamics</h5><p>Mark Ho is first author on all 4 of his papers — the implementation leader. Fox, Kautz, and Ginsburg serve as senior/last authors — the research directors. Vahdat, Kreis, Yang, and Chao share first-author credit across collaborative papers.</p></div>
+</div>
+</section>
+
+<!-- ===== SECTION 6: PRODUCT TRANSFER STORIES ===== -->
+<section id="s6">
+<div class="section-head">
+  <span class="section-num">§6</span>
+  <h2>Product Transfer Stories</h2>
+</div>
+
+<!-- 6.1 Isaac -->
+<h3>6.1 Isaac Ecosystem <span class="badge direct" style="font-size:11px;margin-left:8px">16 papers</span></h3>
+<p>The Isaac ecosystem is NVIDIA's robot AI development platform, organized in layers from simulation through training to deployment. It is the largest recipient of verified research transfer — 16 papers feed into 8 distinct Isaac products.</p>
+
+<h4>Architecture Overview</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Layer</th><th>Product</th><th>Role</th><th>Research Input</th></tr></thead>
+<tbody>
+<tr><td>Simulation</td><td>Isaac Sim</td><td>High-fidelity digital twin</td><td>Factory's SDF collision detection → PhysX (arxiv-2771)</td></tr>
+<tr><td>Training</td><td>Isaac Lab</td><td>GPU-accelerated RL/IL</td><td>DeXtreme domain randomization (arxiv-2665), IndustReal impedance control (rss-0011)</td></tr>
+<tr><td>Training (legacy)</td><td>Isaac Gym</td><td>Standalone GPU RL</td><td>Factory parallel environments, DeXtreme cube rotation</td></tr>
+<tr><td>Deployment</td><td>Isaac ROS</td><td>ROS 2 perception + control</td><td>FoundationPose uncertainty quantification (icra-0029)</td></tr>
+<tr><td>Foundation</td><td>Isaac GR00T</td><td>Foundation models for humanoids</td><td>GR00T N1 dual-system architecture (arxiv-2567), MaskedMimic (siggraph-0009)</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>Transfer Timeline — Five Phases</h4>
+<div class="timeline">
+  <div class="tl-phase">
+    <div class="tl-title">Phase 1: Foundation (2020-2021)</div>
+    <div class="tl-body">Early human-robot interaction research. arxiv-2957 on grasp classification for reactive handovers was blogged same month as publication (March 2020), using early Isaac SDK + CUDA.</div>
+  </div>
+  <div class="tl-phase">
+    <div class="tl-title">Phase 2: Sim-to-Real Breakthrough (2022)</div>
+    <div class="tl-body"><strong>Factory</strong> (arxiv-2771, RSS 2022) solved contact-rich assembly simulation — 20,000× speedup, 1,024 parallel nut-and-bolt assemblies in real-time. Physics methods went into PhysX; NIST Task Board 1 benchmark shipped in Isaac Gym. <strong>DeXtreme</strong> (arxiv-2665) trained a dexterous hand in Isaac Gym — 42 years-equivalent robot experience in 32 hours on a single OVX server.</div>
+  </div>
+  <div class="tl-phase">
+    <div class="tl-title">Phase 3: Assembly Maturation (2023-2024)</div>
+    <div class="tl-body"><strong>IndustReal</strong> (rss-0011, RSS 2023) extended Factory to real hardware — gear assembly on UR10e via Isaac ROS perception pipeline. <strong>AutoMate</strong> (rss-0004, RSS 2024) generalized across diverse part geometries. <strong>SkillGen</strong> (corl-0008, CoRL 2024) automated demonstration generation.</div>
+  </div>
+  <div class="tl-phase">
+    <div class="tl-title">Phase 4: Dexterity Renaissance (2025)</div>
+    <div class="tl-body">DextrAH-RGB achieved zero-shot sim-to-real grasping on Boston Dynamics Atlas. DexMimicGen generated 21K bimanual demonstrations from 60 human examples (90% can-sorting success). GraspGen released 57M synthetic grasps across three gripper types.</div>
+  </div>
+  <div class="tl-phase">
+    <div class="tl-title">Phase 5: Foundation Models (2024-2025)</div>
+    <div class="tl-body"><strong>MaskedMimic</strong> (siggraph-0009, SIGGRAPH 2024) unified humanoid control through motion inpainting. <strong>GR00T N1</strong> (arxiv-2567, March 2025) — 2B-parameter foundation model with dual-system architecture, 76.8% humanoid manipulation success vs 46.4% baselines. Open weights on Hugging Face.</div>
+  </div>
+</div>
+
+<div class="callout">
+<strong>Key Patterns</strong>
+<strong>Academic validation before productization</strong> — every major paper appeared first at a top venue (RSS, ICRA, CoRL, NeurIPS, SIGGRAPH). <strong>Transfer latency varies</strong> — GR00T N1 blogged same month; IndustReal took 2 years. <strong>The R2D2 channel</strong> — NVIDIA's "Robotics Research and Development Digest" blog series became the primary vehicle for translating papers into developer-facing narratives.
+</div>
+
+<!-- 6.2 Dev Tools -->
+<h3>6.2 Developer Tools <span class="badge direct" style="font-size:11px;margin-left:8px">23 papers</span></h3>
+<p>NVIDIA's developer-tools ecosystem spans "horizontal" platforms (CUDA, Warp, TensorRT — accelerating any workload) and "vertical" tools (Sionna for wireless, Riva for voice, Reflex for gaming, Marco for chip design).</p>
+
+<h4>CUDA & GPU: The Horizontal Substrate</h4>
+<p><strong>A100 GPU enabling CV research (arxiv-3003):</strong> Two CVPR 2020 papers exploited new Ampere features — third-gen Tensor Cores with TF32 delivering up to 10× throughput over Volta; 2:4 structured sparsity doubling effective math throughput for inference. The pattern: new GPU hardware → larger models, faster iteration. <strong>UNAS via TensorRT + CUDA (arxiv-2971):</strong> Neural architecture search deployed through TensorRT with AMP on V100 GPUs, achieving 16× inference speedup.</p>
+
+<h4>Research-to-Library: Papers Become SDK Features</h4>
+<p><strong>Kaolin Library</strong> — arxiv-2604 (2024) delivered Simplicits handling meshes, point clouds, Gaussian Splats, and NeRFs. Became <code>kaolin.physics</code> API. <strong>Warp</strong> — GPU computing in Python, used across graphics, robotics, and physics. <strong>Sionna → TensorRT → Aerial pipeline</strong> — neural receiver research prototyped in Sionna, hardened through TensorRT for real-time inference (&lt;1ms on A100), graduated to Aerial (commercial 5G RAN).</p>
+
+<h4>Research-to-Product: Papers Become Product Capabilities</h4>
+<p><strong>Riva</strong> — Parakeet ASR, Canary multilingual, and Parakeet-TDT models → Riva production serving. <strong>Reflex</strong> — 15,000+ players studied across latency conditions; top-decile players hit 2× more targets at 25ms vs 85ms. Justified Reflex SDK design. <strong>Marco & DREAMPlace</strong> — LLM multi-agent framework for chip design (VerilogCoder at 94.2% benchmark success, MCMM at ~60× human speedup).</p>
+
+<div class="callout">
+<strong>Key Pattern: Horizontal vs Vertical</strong>
+Horizontal tools (CUDA, Warp, TensorRT) transfer narrowly (API/runtime changes) but impact broadly. Vertical tools (Sionna, Riva, Reflex) have longer, multi-stage pipelines: simulation → optimization → commercial deployment. Warp and Kaolin sit in the middle — domain-aware but general enough to serve graphics, robotics, and creative tools.
+</div>
+
+<!-- 6.3 NeMo -->
+<h3>6.3 NeMo Ecosystem <span class="badge direct" style="font-size:11px;margin-left:8px">12 papers</span></h3>
+<p>NVIDIA NeMo is a three-tier platform: <strong>NeMo Framework</strong> (LLM training), <strong>Megatron-Core</strong> (distributed training), and <strong>NeMo Curator</strong> (data pipelines). Twelve research papers have transferred to this ecosystem since 2020.</p>
+
+<h4>ASR/Speech: The Longest Pipeline</h4>
+<p>The speech lineage begins with arxiv-3026 (May 2020) — cross-language transfer learning for CTC-based ASR, shipped same month as NeMo "jump-start training." <strong>Fast-Conformer</strong> (arxiv-2674, May 2023) achieved 2.8× faster training; eleven months later powered the <strong>Canary</strong> model. <strong>Token-and-Duration Transducer</strong> (arxiv-2677, April 2023) became <strong>Parakeet-TDT</strong> — 64% faster inference, first sub-7.0 WER on HuggingFace. Long-form ASR study (arxiv-2645) validated Parakeet on earnings calls and lecture-length audio.</p>
+
+<h4>LLM Optimization: Alignment, Compression, Architectures</h4>
+<p><strong>SteerLM</strong> (arxiv-2644, Oct 2023) replaced complex RLHF with attribute-conditioned SFT — shipped in NeMo same month. <strong>Minitron</strong> (arxiv-2594, Aug 2024) systematized LLM compression — produced Minitron-8B, Mistral-NeMo-Minitron-8B (outperforming Llama-3.1-8B on 9 benchmarks). <strong>Mamba-2-Hybrid</strong> (arxiv-2614, Jun 2024) — Mamba-2 layers 18× faster at sequence length 256K; NeMo + Megatron-Core added SSM support <strong>one month later</strong> — the fastest paper-to-product cycle in the dataset.</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Year</th><th>Key Papers</th><th>Product Integration</th><th>Theme</th></tr></thead>
+<tbody>
+<tr><td>2020</td><td>arxiv-3026, arxiv-2962, arxiv-2965</td><td>NeMo ASR, BioMegatron, LAMP/MONAI</td><td>Foundation: ASR transfer learning, biomedical NLP</td></tr>
+<tr><td>2023</td><td>arxiv-2674, arxiv-2677, arxiv-2644, arxiv-2645</td><td>Fast-Conformer, TDT, SteerLM, Parakeet</td><td>Speech architecture redesign, LLM alignment</td></tr>
+<tr><td>2024</td><td>arxiv-2614, arxiv-2594, arxiv-2629</td><td>Mamba-2-Hybrid (1 month), Minitron, ASR confidence</td><td>LLM architecture innovation, model compression</td></tr>
+<tr><td>2025</td><td>arxiv-2579</td><td>NeMo Curator (Cosmos data pipeline)</td><td>Data curation at scale</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout">
+<strong>Key Pattern: The 1-12 Month Cycle</strong>
+NeMo demonstrates the fastest paper-to-product turnaround: 1 month for Mamba-2-Hybrid, 1-6 months for SteerLM and Minitron, 6-12 months for speech models. Tight researcher-engineer collaboration drives this speed. NeMo is the clearest example of NVIDIA's <em>"publish and ship"</em> research model.
+</div>
+
+<!-- 6.4 CUDA + GPU -->
+<h3>6.4 CUDA + GPU: The Silent Substrate <span class="badge direct" style="font-size:11px;margin-left:8px">8 papers</span></h3>
+<p>CUDA and GPU hardware are the foundation beneath every other NVIDIA product — yet they generate the fewest blog posts per paper. With <strong>158 papers on GPU Architecture but zero verified blog transfers</strong>, and 8 papers linking to CUDA/A100, this ecosystem represents the "silent" side of research transfer.</p>
+
+<div class="synthesis-box">
+<h4>Why GPU Architecture Has Zero Blog Transfers</h4>
+<p>GPU architecture research (158 papers) publishes at architecture venues or arxiv, then ships in products like Blackwell, Hopper, and Ampere — without blog fanfare. The absence of blog evidence here is <strong>not evidence of absence</strong>. It reflects a different communication strategy: hardware ships through product launches and technical documentation, not research blogs. CUDA appears as a secondary product across every ecosystem — as the execution substrate for Isaac and NeMo workloads, as the acceleration core for DREAMPlace. The 8 papers with CUDA as a named product undercount its actual impact. <strong>CUDA is the water, not the fish.</strong></p>
+</div>
+</section>
+
+<!-- ===== SECTION 7: GPT MOMENT SHIFT ===== -->
+<section id="s7">
+<div class="section-head">
+  <span class="section-num">§7</span>
+  <h2>GPT Moment Shift</h2>
+</div>
+<p>Comparing <strong>pre-GPT (2020-2022)</strong> to <strong>post-GPT (2023-2026)</strong>:</p>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-val">449 → 442</div><div class="stat-lbl">Papers (Stable)</div></div>
+  <div class="stat-card"><div class="stat-val green">+178%</div><div class="stat-lbl">Foundation Models Growth</div></div>
+  <div class="stat-card"><div class="stat-val" style="color:#D55E00">-64%</div><div class="stat-lbl">GPU Architecture Decline</div></div>
+  <div class="stat-card"><div class="stat-val teal">2.5×</div><div class="stat-lbl">Transfer Rate Increase</div></div>
+</div>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>Dimension</th><th>Pre-GPT</th><th>Post-GPT</th><th>Δ</th></tr></thead>
+<tbody>
+<tr><td><strong>Scale</strong></td><td>449 papers</td><td>442 papers</td><td style="color:#888">Flat</td></tr>
+<tr><td><strong>Composition</strong></td><td>Hardware-focused</td><td>Model-focused</td><td style="color:#76B900">Foundation Models +178%</td></tr>
+<tr><td><strong>Collaboration</strong></td><td>88% NVIDIA-led</td><td>87% NVIDIA-led</td><td style="color:#888">Stable</td></tr>
+<tr><td><strong>Transfer Rate</strong></td><td class="rate">3.6%</td><td class="rate">9.0%</td><td style="color:#009E73">+2.5×</td></tr>
+<tr><td><strong>Direct Transfers</strong></td><td class="num">11</td><td class="num">29</td><td style="color:#009E73">+18</td></tr>
+<tr><td><strong>New Domains</strong></td><td>—</td><td>Miscellaneous (3), Data Systems (1)</td><td style="color:#76B900">Nascent diversification</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="synthesis-box">
+<h4>Synthesis</h4>
+<p>The GPT moment did not cause NVIDIA to produce more research — it caused NVIDIA to produce <strong>different</strong> research. The 449-to-442 paper count is effectively flat. But beneath that surface stability lies a radical reallocation: Foundation Models absorbed 103 net-new papers while GPU Architecture shed 74. The shift is not just topical but operational — Foundation Model research transfers to products through blogs at 11.0%, while GPU Architecture transfers at 0% through the same channel. The blog, as a developer-facing medium, is naturally suited to software and model releases; hardware ships through product launches and datasheets. The post-GPT transfer rate increase (3.6% → 9.0%) is therefore partly compositional: more research now falls into blog-friendly domains, and NVIDIA has grown more systematic about blogging research-to-product connections. The stable collaboration ratio (88% → 87% NVIDIA-led) confirms that the organizational model — NVIDIA sets the agenda, academia provides expertise and co-authors — survived the GPT disruption intact.</p>
+</div>
+</section>
+
+<!-- ===== SECTION 8: KEY TAKEAWAYS ===== -->
+<section id="s8">
+<div class="section-head">
+  <span class="section-num">§8</span>
+  <h2>Key Takeaways</h2>
+</div>
+
+<div class="takeaway-grid">
+  <div class="takeaway-card">
+    <div class="tk-num">1</div>
+    <div class="tk-title">Real Pipeline, Selective Evidence</div>
+    <div class="tk-body">6.3% of papers have verified blog transfer — a lower bound that captures the documented, public-facing slice of transfer. GPU Architecture ships silently; Foundation Models ship loudly.</div>
+  </div>
+  <div class="takeaway-card">
+    <div class="tk-num">2</div>
+    <div class="tk-title">Redirected, Not Expanded</div>
+    <div class="tk-body">Total output held steady (449 → 442), but Foundation Models surged 178% while GPU Architecture declined 64%. NVIDIA reprioritized rather than expanded.</div>
+  </div>
+  <div class="takeaway-card">
+    <div class="tk-num">3</div>
+    <div class="tk-title">NVIDIA Leads, Academia Collaborates</div>
+    <div class="tk-body">87.9% NVIDIA first-authored, yet 92% involve academic co-authors. Foundation Models has the strongest academic participation (25% first-authored).</div>
+  </div>
+  <div class="takeaway-card">
+    <div class="tk-num">4</div>
+    <div class="tk-title">Isaac & NeMo: The Clearest Pipelines</div>
+    <div class="tk-body">16 Isaac papers and 12 NeMo papers show how research flows into developer-facing products through the blog channel.</div>
+  </div>
+  <div class="takeaway-card">
+    <div class="tk-num">5</div>
+    <div class="tk-title">Transfer Accelerated Post-GPT</div>
+    <div class="tk-body">The 2.5× increase in transfer rate (3.6% → 9.0%) suggests NVIDIA became more systematic about communicating research-to-product pathways.</div>
+  </div>
+  <div class="takeaway-card">
+    <div class="tk-num">6</div>
+    <div class="tk-title">The Blog Is Strategic — Not the Only Channel</div>
+    <div class="tk-body">53 blogs carry verified research transfer. GPU architecture, with zero verified blog transfers but 158 papers, ships through different channels entirely.</div>
+  </div>
+</div>
+</section>
+
+<!-- ===== APPENDIX ===== -->
+<section id="appendix">
+<div class="section-head">
+  <span class="section-num">§A</span>
+  <h2>Appendix: Plan Compliance Check</h2>
+</div>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>#</th><th>Planned Analysis</th><th>Satisfied?</th><th>Evidence</th></tr></thead>
+<tbody>
+<tr><td class="num">1</td><td>Domain static distribution</td><td style="color:#76B900">✓ Yes</td><td>Section 2.1 + figure</td></tr>
+<tr><td class="num">2</td><td>Domain temporal evolution with GPT split</td><td style="color:#76B900">✓ Yes</td><td>Section 2.2 + figure</td></tr>
+<tr><td class="num">3</td><td>CV/GPU/LLM post-2022 surge check</td><td style="color:#76B900">✓ Yes</td><td>Sections 2.3, 2.4</td></tr>
+<tr><td class="num">4</td><td>Solo NVIDIA vs academic collaboration ratio</td><td style="color:#76B900">✓ Yes</td><td>Section 3.1</td></tr>
+<tr><td class="num">5</td><td>First-author academic-led breakdown</td><td style="color:#76B900">✓ Yes</td><td>Section 3.1</td></tr>
+<tr><td class="num">6</td><td>Domain academic participation ranking</td><td style="color:#76B900">✓ Yes</td><td>Section 3.3</td></tr>
+<tr><td class="num">7</td><td>Top scholar collaborators</td><td style="color:#76B900">✓ Yes</td><td>Section 3.4</td></tr>
+<tr><td class="num">8</td><td>Transfer evidence type distribution</td><td style="color:#76B900">✓ Yes</td><td>Section 4.1 (calibrated: DIRECT/MODERATE)</td></tr>
+<tr><td class="num">9</td><td>Papers with product footprints count</td><td style="color:#76B900">✓ Yes</td><td>Section 4.1: 56/891 (6.3%)</td></tr>
+<tr><td class="num">10</td><td>Product-level mapping (which products)</td><td style="color:#76B900">✓ Yes</td><td>Section 4.3</td></tr>
+<tr><td class="num">11</td><td>Domain-to-product landing analysis</td><td style="color:#76B900">✓ Yes</td><td>Section 4.2 (domain transfer rates)</td></tr>
+<tr><td class="num">12</td><td>Scholar contribution to product transfer</td><td style="color:#76B900">✓ Yes</td><td>Sections 4.5, 5</td></tr>
+</tbody>
+</table>
+</div>
+<p style="font-size:14px;color:#76B900;font-weight:600;margin-top:12px">All 12 planned analyses satisfied with calibrated data.</p>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="report-footer">
+  <p style="margin-top:8px">Generated 2026-06-05 · 891 papers · 3,678 blog posts · 14 domains · 3-stage verified transfer pipeline</p>
+  <p style="margin-top:10px">Content license: report text is licensed under <a rel="license" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>. Images/illustrations are © 2026 Wenqin Shao (邵文钦). All rights reserved. Code examples are MIT unless otherwise noted. Third-party materials remain under their respective rights.</p>
+</footer>
+
+</main>
+
+<!-- ===== BACK TO TOP ===== -->
+<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">↑</button>
+
+<!-- ===== LIGHTBOX ===== -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img src="" alt="" id="lightboxImg">
+</div>
+
+<script>
+// Scroll-spy for sidebar nav
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.sidebar-nav a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+      });
+    }
+  });
+}, { rootMargin: '-10% 0px -80% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// Back to top button
+const btn = document.getElementById('backToTop');
+window.addEventListener('scroll', () => {
+  btn.classList.toggle('visible', window.scrollY > 600);
+});
+
+// Lightbox for figures
+function openLightbox(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.add('show');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('show');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+</script>
+
+</body>
+</html>

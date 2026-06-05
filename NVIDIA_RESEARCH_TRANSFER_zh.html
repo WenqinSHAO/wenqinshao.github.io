@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NVIDIA 研究 → 产品转化管道 (2020-2026)</title>
+<style>
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans SC',sans-serif;color:#333;background:#F5F6F8;line-height:1.8}
+
+/* ===== SIDEBAR NAV ===== */
+.sidebar{position:fixed;top:0;left:0;width:220px;height:100vh;background:#1A1A1A;color:#ccc;overflow-y:auto;z-index:100;display:flex;flex-direction:column;padding:0}
+.sidebar-header{padding:24px 20px 16px;border-bottom:1px solid #333}
+.sidebar-header .report-label{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#76B900;margin-bottom:4px}
+.sidebar-header h2{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:15px;font-weight:600;color:#fff;line-height:1.4}
+.sidebar-nav{flex:1;padding:12px 0}
+.sidebar-nav a{display:block;padding:8px 20px;color:#999;text-decoration:none;font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:13px;border-left:3px solid transparent;transition:all .15s}
+.sidebar-nav a:hover{color:#fff;background:#252525}
+.sidebar-nav a.active{color:#76B900;border-left-color:#76B900;background:#222}
+.sidebar-nav a .nav-num{display:inline-block;width:22px;font-weight:600;font-size:11px;color:#666}
+.sidebar-nav a.active .nav-num{color:#76B900}
+.sidebar-footer{padding:16px 20px;border-top:1px solid #333;font-size:11px;color:#555;font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif}
+
+/* ===== MAIN CONTENT ===== */
+.main{margin-left:236px;max-width:880px;padding:0 48px 80px}
+
+/* ===== HERO ===== */
+.hero{background:linear-gradient(135deg,#1A1A1A 0%,#1a2a10 50%,#0d1a00 100%);color:#fff;padding:64px 0 48px;margin-bottom:48px;border-bottom:4px solid #76B900;text-align:center}
+.hero h1{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:36px;font-weight:700;line-height:1.3;margin-bottom:8px}
+.hero h1 .green{color:#76B900}
+.hero .subtitle{font-size:18px;color:#aaa;margin-bottom:28px}
+.hero-metrics{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.hero-metric{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:12px 18px;text-align:center;min-width:100px}
+.hero-metric .metric-value{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:24px;font-weight:700;color:#76B900}
+.hero-metric .metric-label{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:#999;font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif}
+.hero-date{font-size:12px;color:#666;margin-top:20px;font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif}
+
+/* ===== SECTIONS ===== */
+section{margin-bottom:56px}
+.section-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:24px;padding-bottom:12px;border-bottom:2px solid #E1E4E8}
+.section-num{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:14px;font-weight:700;color:#76B900;background:#EEF5DD;padding:4px 10px;border-radius:4px;white-space:nowrap;margin-top:4px}
+.section-head h2{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:26px;font-weight:700;color:#1A1A1A;line-height:1.3}
+h3{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:20px;font-weight:600;color:#333;margin-top:32px;margin-bottom:12px}
+h4{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:16px;font-weight:600;color:#444;margin-top:24px;margin-bottom:8px}
+p{margin-bottom:14px;font-size:16px}
+
+/* ===== FIGURES ===== */
+figure{margin:28px 0;text-align:center}
+figure img{max-width:100%;height:auto;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,.08);border:1px solid #E1E4E8;cursor:pointer;transition:transform .15s}
+figure img:hover{transform:scale(1.01)}
+figcaption{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:13px;color:#888;margin-top:8px}
+
+/* ===== TABLES ===== */
+.table-wrap{overflow-x:auto;margin:20px 0}
+table{width:100%;border-collapse:collapse;font-size:14px;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.05);border:1px solid #E1E4E8}
+thead{background:#1A1A1A;color:#fff}
+thead th{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-weight:600;font-size:12px;padding:10px 14px;text-align:left}
+tbody td{padding:9px 14px;border-bottom:1px solid #E1E4E8}
+tbody tr:nth-child(even){background:#FAFBFC}
+tbody tr:hover{background:#F0F4E8}
+td.num{font-family:'SF Mono','Fira Code','Consolas',monospace;text-align:right;font-weight:600}
+td.rate{font-family:'SF Mono','Fira Code','Consolas',monospace;text-align:right;color:#009E73;font-weight:600}
+
+/* ===== CALLOUT BOXES ===== */
+.callout{padding:16px 20px;margin:20px 0;border-left:4px solid #009E73;background:#F0FAF6;border-radius:0 6px 6px 0;font-size:14px}
+.callout.warning{border-left-color:#D55E00;background:#FFF8F0}
+.callout.info{border-left-color:#4A90D9;background:#F0F5FB}
+.callout strong{display:block;font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;color:#555}
+
+/* ===== STAT CARDS ===== */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:20px 0}
+.stat-card{background:#fff;border:1px solid #E1E4E8;border-radius:8px;padding:16px 18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.stat-card .stat-val{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:28px;font-weight:700;color:#1A1A1A}
+.stat-card .stat-val.green{color:#76B900}
+.stat-card .stat-val.teal{color:#009E73}
+.stat-card .stat-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#888;font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;margin-top:2px}
+
+/* ===== PIPELINE FLOW ===== */
+.pipeline{display:flex;gap:0;margin:24px 0;flex-wrap:wrap}
+.pipeline-stage{flex:1;min-width:140px;background:#fff;border:1px solid #E1E4E8;border-radius:8px;padding:18px 16px;text-align:center;position:relative;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.pipeline-stage .stage-num{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:28px;font-weight:800;color:#76B900;opacity:.3;margin-bottom:4px}
+.pipeline-stage .stage-title{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:13px;font-weight:700;color:#1A1A1A;margin-bottom:6px}
+.pipeline-stage .stage-desc{font-size:12px;color:#666;line-height:1.5}
+.pipeline-arrow{display:flex;align-items:center;padding:0 4px;color:#76B900;font-size:20px;font-weight:700}
+
+/* ===== RESEARCHER CARDS ===== */
+.researcher-grid{display:grid;grid-template-columns:1fr;gap:16px;margin:20px 0}
+.researcher-card{background:#fff;border:1px solid #E1E4E8;border-radius:8px;padding:20px 22px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.researcher-card .r-header{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.r-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#1A1A1A,#444);display:flex;align-items:center;justify-content:center;color:#76B900;font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:18px;font-weight:700;flex-shrink:0}
+.r-name{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:17px;font-weight:700;color:#1A1A1A}
+.r-meta{font-size:12px;color:#888;font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.badge.direct{background:#E0F5EE;color:#007A55}
+.badge.moderate{background:#FFF3E0;color:#B26500}
+.badge.nvidia{background:#E8F5E0;color:#5A8A00}
+.badge.academic{background:#FFF8E0;color:#B28000}
+.r-papers{list-style:none;font-size:13px;color:#555;line-height:1.6}
+.r-papers li{margin-bottom:2px;padding:2px 0;font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px}
+.r-papers li .paper-id{color:#666}
+.r-pattern{font-size:13px;color:#666;margin-top:8px}
+
+/* ===== TIMELINE ===== */
+.timeline{position:relative;padding-left:28px;margin:20px 0}
+.timeline::before{content:'';position:absolute;left:8px;top:4px;bottom:4px;width:3px;background:#E1E4E8;border-radius:2px}
+.tl-phase{position:relative;margin-bottom:20px}
+.tl-phase::before{content:'';position:absolute;left:-24px;top:6px;width:13px;height:13px;border-radius:50%;background:#76B900;border:3px solid #D4EDAA}
+.tl-phase .tl-title{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-weight:700;font-size:15px;color:#1A1A1A;margin-bottom:2px}
+.tl-phase .tl-body{font-size:14px;color:#555}
+
+/* ===== ECOSYSTEM CARDS ===== */
+.eco-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.eco-card{background:#fff;border:1px solid #E1E4E8;border-radius:8px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.eco-card h5{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:14px;font-weight:700;color:#1A1A1A;margin-bottom:6px}
+.eco-card p{font-size:13px;color:#555;line-height:1.6}
+
+/* ===== FOOTER ===== */
+.report-footer{border-top:2px solid #E1E4E8;padding-top:24px;margin-top:40px;font-size:12px;color:#888;font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif}
+.report-footer a{color:#76B900;text-decoration:none}
+.report-footer a:hover{text-decoration:underline}
+
+/* ===== KEY TAKEAWAYS ===== */
+.takeaway-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.takeaway-card{background:#fff;border-top:4px solid #76B900;border-radius:6px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.takeaway-card .tk-num{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:32px;font-weight:800;color:#76B900;opacity:.25;line-height:1;margin-bottom:4px}
+.takeaway-card .tk-title{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;font-size:14px;font-weight:700;color:#1A1A1A;margin-bottom:4px}
+.takeaway-card .tk-body{font-size:13px;color:#555;line-height:1.6}
+
+/* ===== BACK TO TOP ===== */
+.back-to-top{position:fixed;bottom:24px;right:24px;width:40px;height:40px;border-radius:50%;background:#76B900;color:#fff;border:none;cursor:pointer;font-size:20px;display:none;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(118,185,0,.3);z-index:200;transition:opacity .2s}
+.back-to-top.visible{display:flex}
+
+/* ===== LIGHTBOX ===== */
+.lightbox{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);z-index:999;align-items:center;justify-content:center;cursor:pointer}
+.lightbox.show{display:flex}
+.lightbox img{max-width:92%;max-height:92%;border-radius:4px}
+
+/* ===== SYNTHESIS BOX ===== */
+.synthesis-box{background:linear-gradient(135deg,#1A1A1A,#1a2a10);color:#ddd;padding:24px 28px;border-radius:8px;margin:24px 0;border-left:4px solid #76B900}
+.synthesis-box h4{font-family:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#76B900;font-size:14px;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.synthesis-box p{font-size:15px;line-height:1.8}
+
+/* ===== CODE/ID STYLING ===== */
+.paper-ref{font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:13px;color:#555;background:#f0f0f0;padding:1px 5px;border-radius:3px}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .sidebar{position:relative;width:100%;height:auto;max-height:40vh}
+  .main{margin-left:0;padding:0 20px 60px}
+  .hero{padding:36px 0 28px}
+  .hero h1{font-size:24px}
+  .hero .subtitle{font-size:15px}
+  .hero-metrics{gap:8px}
+  .hero-metric{padding:8px 12px;min-width:70px}
+  .hero-metric .metric-value{font-size:18px}
+  .eco-grid{grid-template-columns:1fr}
+  .takeaway-grid{grid-template-columns:1fr}
+  .pipeline{flex-direction:column}
+  .pipeline-arrow{transform:rotate(90deg);justify-content:center;padding:4px 0}
+}
+@media print{
+  .sidebar,.back-to-top{display:none!important}
+  .main{margin-left:0;padding:0}
+  .hero{background:#fff!important;color:#000!important;border-bottom:2px solid #000;padding:20px 0}
+  .hero h1 .green{color:#000}
+  .hero-metric{background:#f5f5f5;border:1px solid #ccc}
+  .hero-metric .metric-value{color:#000}
+  figure img{box-shadow:none}
+  section{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="report-label">技术报告 · 2026-06-05</div>
+    <h2>NVIDIA 研究<br>→ 产品转化管道</h2>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="#s1"><span class="nav-num">1</span> 方法论与范围</a>
+    <a href="#s2"><span class="nav-num">2</span> 领域全景</a>
+    <a href="#s3"><span class="nav-num">3</span> 学术合作</a>
+    <a href="#s4"><span class="nav-num">4</span> 产品转化</a>
+    <a href="#s5"><span class="nav-num">5</span> 研究者画像</a>
+    <a href="#s6"><span class="nav-num">6</span> 产品转化故事</a>
+    <a href="#s7"><span class="nav-num">7</span> GPT时刻转变</a>
+    <a href="#s8"><span class="nav-num">8</span> 关键结论</a>
+    <a href="#appendix" style="font-size:11px;padding-left:28px">附录</a>
+  </nav>
+  <div class="sidebar-footer">数据集：891篇论文<br>3,678篇博客 · 14个领域</div>
+</aside>
+
+<!-- ===== MAIN CONTENT ===== -->
+<main class="main">
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <h1><span class="green">NVIDIA 研究</span> → 产品转化管道</h1>
+  <p class="subtitle">学术界如何驱动 NVIDIA 技术生态系统 (2020-2026)</p>
+  <div class="hero-metrics">
+    <div class="hero-metric"><div class="metric-value">891</div><div class="metric-label">研究论文</div></div>
+    <div class="hero-metric"><div class="metric-value">56</div><div class="metric-label">已验证转化</div></div>
+    <div class="hero-metric"><div class="metric-value">14</div><div class="metric-label">研究领域</div></div>
+    <div class="hero-metric"><div class="metric-value">3,678</div><div class="metric-label">博客文章分析</div></div>
+  </div>
+  <div class="hero-date">生成日期 2026-06-05 · 经三阶段智能体审核校准的转化证据</div>
+</header>
+
+<!-- ===== SECTION 1: METHODOLOGY ===== -->
+<section id="s1">
+<div class="section-head">
+  <span class="section-num">§1</span>
+  <h2>方法论与范围</h2>
+</div>
+
+<h3>1.1 数据范围</h3>
+<p>本报告通过三个相互关联的数据源分析 NVIDIA 的研究到产品转化管道：</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>数据源</th><th>描述</th><th>覆盖范围</th></tr></thead>
+<tbody>
+<tr><td><strong>研究论文</strong></td><td>从 <code>research.nvidia.com</code> 抓取的论文，标注了研究领域、发表 venue 和作者所属机构</td><td>891篇论文 (2020-2026)，标签 <code>nvidia-research</code></td></tr>
+<tr><td><strong>技术博客</strong></td><td>通过 NVIDIA 技术博客 Atom feed 发现的所有文章</td><td>3,678篇文章 (2020-2026)</td></tr>
+<tr><td><strong>转化证据</strong></td><td>经过智能体内容审核验证的论文-博客匹配</td><td>56篇论文 → 53篇博客 → 71条已验证链接</td></tr>
+</tbody>
+</table>
+</div>
+<p>论文覆盖31个研究方向，映射至14个领域。以 GPT 时刻（2022年末）为时间分界线：<strong>GPT前</strong>（2020-2022）vs <strong>GPT后</strong>（2023-2026）。</p>
+
+<h3>1.2 如何界定产品转化</h3>
+<p>核心方法论挑战在于区分真正的研究到产品转化与单纯的研究者可见度。我们采用<strong>三阶段过滤管道</strong>：</p>
+
+<div class="pipeline">
+  <div class="pipeline-stage">
+    <div class="stage-num">1</div>
+    <div class="stage-title">启发式匹配（初筛）</div>
+    <div class="stage-desc">交叉比对891篇论文 × 3,678篇博客，通过作者姓名重合、标题短语匹配和项目名称检测。<br><strong>→ 442个候选配对</strong></div>
+  </div>
+  <div class="pipeline-arrow">→</div>
+  <div class="pipeline-stage">
+    <div class="stage-num">2</div>
+    <div class="stage-title">标题匹配筛选（精筛）</div>
+    <div class="stage-desc">要求博客包含论文标题中5个词以上的连续短语。排除373个仅靠作者名匹配的假阳性。<br><strong>→ 69篇论文通过</strong></div>
+  </div>
+  <div class="pipeline-arrow">→</div>
+  <div class="pipeline-stage">
+    <div class="stage-num">3</div>
+    <div class="stage-title">智能体内容审核（验证）</div>
+    <div class="stage-desc">获取70个博客URL，进行人工水准的判断：是真转化还是新闻汇总/奖项/教程。标注 DIRECT 或 MODERATE 强度。<br><strong>→ 56篇验证论文</strong></div>
+  </div>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-val green">56</div><div class="stat-lbl">已验证论文 (6.3%)</div></div>
+  <div class="stat-card"><div class="stat-val">53</div><div class="stat-lbl">独立博客</div></div>
+  <div class="stat-card"><div class="stat-val teal">40</div><div class="stat-lbl">直接转化 (DIRECT)</div></div>
+  <div class="stat-card"><div class="stat-val" style="color:#E69F00">18</div><div class="stat-lbl">关联转化 (MODERATE)</div></div>
+</div>
+
+<h3>1.3 为什么这套方法有效</h3>
+<p>三阶段设计解决了根本性的信噪比问题。作者姓名重合非常常见——频繁撰写博客的 NVIDIA 研究者会产生数百个假阳性关联。标题短语匹配虽罕见但可靠：当一篇博客包含论文标题中5个词以上的连续短语时，几乎可以确定它在讨论该论文。智能体审核解决剩余的边缘情况：会议新闻汇总（"NVIDIA在NeurIPS发表20篇论文"）、奖项公告和社区教程等偶然匹配论文标题的情况。</p>
+<p>从442篇到56篇的<strong>7.9倍缩减</strong>不是数据损失——而是噪声剔除。这56篇论文代表了我们有直接博客证据支撑的、可辩护的研究到产品转化集合。</p>
+
+<div class="callout warning">
+<strong>注意事项</strong>
+本方法论仅捕获在 NVIDIA 技术博客上出现的转化。它遗漏了：未经博客报道即应用于产品的技术（GPU架构中常见）、通过其他渠道的转化（GTC演讲、文档、产品发布说明）、非英语内容、以及间接影响产品方向但未被直接引用的研究。
+</div>
+
+<div class="table-wrap" style="margin-top:20px">
+<table>
+<thead><tr><th>章节</th><th>内容</th><th>图表数</th></tr></thead>
+<tbody>
+<tr><td>2. 领域全景</td><td>研究组合的构成与演变</td><td class="num">5</td></tr>
+<tr><td>3. 学术合作</td><td>谁主导研究、顶尖合作伙伴、各领域参与度</td><td class="num">4</td></tr>
+<tr><td>4. 产品转化</td><td>已验证的转化证据、产品、学者、趋势</td><td class="num">5</td></tr>
+<tr><td>5. 研究者画像</td><td>顶尖转化学者：所属机构、研究成果、影响力</td><td class="num">—</td></tr>
+<tr><td>6. 产品转化故事</td><td>深度分析：Isaac、开发者工具、NeMo、CUDA+GPU</td><td class="num">—</td></tr>
+<tr><td>7. GPT时刻转变</td><td>2022年前后各维度的对比</td><td class="num">—</td></tr>
+<tr><td>8. 关键结论</td><td>综合与启示</td><td class="num">—</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ===== SECTION 2: DOMAIN LANDSCAPE ===== -->
+<section id="s2">
+<div class="section-head">
+  <span class="section-num">§2</span>
+  <h2>领域全景</h2>
+</div>
+
+<h3>2.1 研究组合构成</h3>
+<p>NVIDIA 的研究组合横跨14个领域。<strong>AI与机器学习</strong>以451篇论文占据主导——超过排名其后两个领域的论文之和。</p>
+
+<figure>
+  <img src="figures/domain_static_distribution.png" alt="领域静态分布" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>图1：领域静态分布——展示GPT前/后拆分的水平柱状图</figcaption>
+</figure>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>领域</th><th class="num">论文数</th><th class="num">占比</th></tr></thead>
+<tbody>
+<tr><td>AI 与机器学习</td><td class="num">451</td><td class="rate">50.6%</td></tr>
+<tr><td>计算机视觉</td><td class="num">246</td><td class="rate">27.6%</td></tr>
+<tr><td>基础模型</td><td class="num">219</td><td class="rate">24.6%</td></tr>
+<tr><td>机器人与自主系统</td><td class="num">219</td><td class="rate">24.6%</td></tr>
+<tr><td>图形与渲染</td><td class="num">213</td><td class="rate">23.9%</td></tr>
+<tr><td>GPU 架构</td><td class="num">158</td><td class="rate">17.7%</td></tr>
+<tr><td>CUDA 生态</td><td class="num">75</td><td class="rate">8.4%</td></tr>
+<tr><td>应用感知</td><td class="num">73</td><td class="rate">8.2%</td></tr>
+<tr><td>仿真与高性能计算</td><td class="num">47</td><td class="rate">5.3%</td></tr>
+<tr><td>互联与网络</td><td class="num">26</td><td class="rate">2.9%</td></tr>
+</tbody>
+</table>
+</div>
+<p style="font-size:13px;color:#888">论文可归属于多个领域；百分比之和超过100%。</p>
+
+<h3>2.2 时间演化</h3>
+<figure>
+  <img src="figures/domain_temporal_stacked_area.png" alt="领域时间堆叠面积图" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>图2：堆叠面积图——各年度领域构成，2022.5处以GPT-3.5/ChatGPT为分界线</figcaption>
+</figure>
+<p>2022年末之后，领域格局发生了剧变。<strong>基础模型</strong>从GPT前的58篇飙升至GPT后的161篇（+178%）。<strong>GPU架构</strong>则呈现镜像走势——从116篇下降至42篇。第2.5节的分析表明，这种下降与论文更多转向 arxiv 而减少传统架构会议投稿相关；这究竟反映投入减少、发表策略变化还是分类调整，仅从数据本身无法区分。</p>
+
+<h3>2.3 各领域的GPT时刻转变</h3>
+<figure>
+  <img src="figures/domain_gpt_shift.png" alt="领域GPT转变散点图" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>图3：散点图——每个领域为一个点（GPT前 vs GPT后论文数），标注了变化最大的领域</figcaption>
+</figure>
+<p>基础模型在两个时期之间净增103篇论文——是最大的单领域变化。应用感知也显示出强劲增长（+117%），主要由延迟感知和电竞研究驱动。GPU架构是最显著的下降者（-64%），同时CUDA生态的工作也有适度缩减。</p>
+
+<h3>2.4 关键领域轨迹</h3>
+<figure>
+  <img src="figures/domain_key_trends.png" alt="关键领域趋势" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>图4：折线图——七个标志性领域的年度追踪</figcaption>
+</figure>
+<div class="eco-grid">
+  <div class="eco-card"><h5>基础模型 ↗</h5><p>冰球杆曲线——2020-2022年持平，随后陡升至每年45-52篇</p></div>
+  <div class="eco-card"><h5>GPU 架构 ↘</h5><p>2020-2022年高峰期（每年40-42篇），随后急剧降至6-23篇</p></div>
+  <div class="eco-card"><h5>AI与ML、CV、图形学 →</h5><p>稳健、坚实——构成NVIDIA的研究基石</p></div>
+  <div class="eco-card"><h5>机器人学 →</h5><p>各年度持续稳定，无明显波动</p></div>
+</div>
+
+<h3>2.5 Venue × 领域全景</h3>
+<figure>
+  <img src="figures/domain_venue_heatmap.png" alt="领域Venue热力图" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>图5：热力图——前15个领域 × 前10个发表venue</figcaption>
+</figure>
+<p>NVIDIA 每个领域有各自独特的发表venue集群：AI与ML集中在NeurIPS和ICML，计算机视觉在CVPR和ICCV，图形学在SIGGRAPH，机器人学在CoRL和ICRA。GPU架构因其对arxiv的依赖而独树一帜——2022年后在传统架构会议上的发表显著减少。</p>
+</section>
+
+<!-- ===== SECTION 3: ACADEMIC COLLABORATION ===== -->
+<section id="s3">
+<div class="section-head">
+  <span class="section-num">§3</span>
+  <h2>学术合作</h2>
+</div>
+
+<h3>3.1 谁主导？</h3>
+<figure>
+  <img src="figures/collaboration_lead_pie.png" alt="合作主导方饼图" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>图6：饼图——NVIDIA主导 vs 学术界主导 vs 未知的第一作者身份</figcaption>
+</figure>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-val green">87.9%</div><div class="stat-lbl">NVIDIA 第一作者 (774/881)</div></div>
+  <div class="stat-card"><div class="stat-val" style="color:#E69F00">12.1%</div><div class="stat-lbl">学术界第一作者 (107篇)</div></div>
+  <div class="stat-card"><div class="stat-val">8.2%</div><div class="stat-lbl">纯NVIDIA论文 (72篇)</div></div>
+  <div class="stat-card"><div class="stat-val teal">92%</div><div class="stat-lbl">有学术合作者参与 (809篇)</div></div>
+</div>
+<p>仅72篇论文（8.2%）为纯NVIDIA作者、没有外部合作者——绝大多数论文都有学术合作伙伴参与，但NVIDIA在绝大多数情况下主导研究议程。</p>
+
+<h3>3.2 时间稳定性</h3>
+<figure>
+  <img src="figures/collaboration_temporal_split.png" alt="合作时间拆分" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>图7：堆叠柱状图——各年度NVIDIA主导 vs 学术界主导</figcaption>
+</figure>
+<p>NVIDIA主导与学术界主导的比例在全部七个年度中保持稳定。这种合作模式是结构性和制度化的——不是对AI趋势或GPT时刻的应激反应。</p>
+
+<h3>3.3 各领域参与度</h3>
+<figure>
+  <img src="figures/collaboration_by_domain.png" alt="各领域合作情况" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>图8：分组水平柱状图——各领域NVIDIA主导 vs 学术界主导</figcaption>
+</figure>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>领域</th><th class="num">学术界主导比例</th></tr></thead>
+<tbody>
+<tr><td>医学影像</td><td class="rate">33.3% (4/12)</td></tr>
+<tr><td>基础模型</td><td class="rate">25.1% (55/219)</td></tr>
+<tr><td>图形与渲染</td><td class="rate">10.8% (23/213)</td></tr>
+<tr><td>仿真与高性能计算</td><td class="rate">8.5% (4/47)</td></tr>
+<tr><td>CUDA 生态</td><td class="rate">8.0% (6/75)</td></tr>
+</tbody>
+</table>
+</div>
+<p>基础模型是学术界最具实质性主导地位的领域——219篇论文中有55篇的学术第一作者。应用感知、互联与网络以及量子计算领域<strong>零</strong>篇学术主导论文；NVIDIA完全掌控这些研究方向。</p>
+
+<h3>3.4 顶尖学术合作伙伴</h3>
+<figure>
+  <img src="figures/collaboration_top_scholars.png" alt="顶尖合作学者" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>图9：按论文数排名的前30位学术合作者</figcaption>
+</figure>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>学者</th><th class="num">论文数</th><th>主要领域</th></tr></thead>
+<tbody>
+<tr><td>Dieter Fox</td><td class="num">70</td><td>机器人学</td></tr>
+<tr><td>Mark Haoxing Ren</td><td class="num">48</td><td>AI 与 ML</td></tr>
+<tr><td>Boris Ginsburg</td><td class="num">34</td><td>基础模型 (语音)</td></tr>
+<tr><td>Anima Anandkumar</td><td class="num">32</td><td>AI 与 ML</td></tr>
+<tr><td>Timothy Tsai</td><td class="num">25</td><td>AI 与 ML</td></tr>
+</tbody>
+</table>
+</div>
+<div class="callout info">
+<strong>关于双重所属机构的说明</strong>
+几位顶尖"学术"合作者（Dieter Fox、Boris Ginsburg）同时担任NVIDIA研究总监和大学教授职务。这反映了NVIDIA研究领导层中常见的学术-产业双重任职现象。
+</div>
+</section>
+
+<!-- ===== SECTION 4: PRODUCT TRANSFER ===== -->
+<section id="s4">
+<div class="section-head">
+  <span class="section-num">§4</span>
+  <h2>产品转化</h2>
+</div>
+
+<h3>4.1 转化概览</h3>
+<p>经过校准，<strong>891篇论文中有56篇</strong>（6.3%）具有通过NVIDIA技术博客验证的产品转化。虽然这个数字看似不高，但它代表了已记录、可辩护的转化——是冰山一角而非研究到产品转化的全貌。</p>
+
+<figure>
+  <img src="figures/transfer_evidence_types.png" alt="转化证据类型" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>图10：分组柱状图——各时期 DIRECT vs MODERATE 转化</figcaption>
+</figure>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>指标</th><th>GPT前 (2020-2022)</th><th>GPT后 (2023-2026)</th></tr></thead>
+<tbody>
+<tr><td>有转化的论文</td><td class="num">16</td><td class="num">40</td></tr>
+<tr><td>转化率</td><td class="rate">3.6%</td><td class="rate">9.0%</td></tr>
+<tr><td>直接转化 (DIRECT)</td><td class="num">11</td><td class="num">29</td></tr>
+<tr><td>关联转化 (MODERATE)</td><td class="num">5</td><td class="num">13</td></tr>
+</tbody>
+</table>
+</div>
+<p>GPT后时期的转化率提升了<strong>2.5倍</strong>——更多研究通过博客渠道与产品建立连接。</p>
+
+<h3>4.2 各领域转化</h3>
+<figure>
+  <img src="figures/transfer_by_domain.png" alt="各领域转化" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>图11：水平柱状图——按转化率排序的领域，堆叠展示有/无转化</figcaption>
+</figure>
+<p>基础模型具有最高的绝对转化数（24篇论文），在主要领域中转化率也最高（11.0%）。医学影像总体转化率最高（16.7%），但基数很小（2/12篇）。<strong>GPU架构虽有158篇论文，但验证转化为零</strong>——GPU研究悄然出货。</p>
+
+<h3>4.3 产品版图</h3>
+<figure>
+  <img src="figures/transfer_top_products.png" alt="顶尖转化产品" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>图12：按关联论文数排名的前20个产品</figcaption>
+</figure>
+
+<p>四个生态系统主导已验证转化：</p>
+<div class="table-wrap">
+<table>
+<thead><tr><th>生态系统</th><th class="num">论文数</th><th>关键产品</th></tr></thead>
+<tbody>
+<tr><td><strong>Isaac</strong></td><td class="num">16</td><td>Isaac Lab (12), Isaac Sim (6), Isaac Gym, Isaac ROS, GR00T</td></tr>
+<tr><td><strong>NeMo</strong></td><td class="num">12</td><td>NeMo (11), Parakeet, SteerLM, Megatron-Core, Minitron</td></tr>
+<tr><td><strong>开发者工具 & CUDA</strong></td><td class="num">23</td><td>CUDA (8), Warp (3), Riva (4), TensorRT (3), Kaolin, Sionna, Reflex, Marco, RTX</td></tr>
+<tr><td><strong>Omniverse/DRIVE</strong></td><td class="num">4</td><td>Omniverse (3), DRIVE Sim (2)</td></tr>
+</tbody>
+</table>
+</div>
+<p style="font-size:13px;color:#888">生态系统间存在重叠：4篇论文同时出现在开发者工具和Isaac中，4篇同时出现在开发者工具和NeMo中。去重后共43篇。其余13篇分布在 Earth-2 (3)、医学AI (4) 和独立转化中。</p>
+
+<h3>4.4 时间转化趋势</h3>
+<figure>
+  <img src="figures/transfer_temporal.png" alt="转化时间趋势" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>图13：双线图——每年发表的论文数 vs 有转化的论文数，GPT分界线</figcaption>
+</figure>
+<p>已验证转化显示出明显的GPT后加速：GPT前16篇 vs GPT后40篇。2023年的峰值（18篇论文）与基础模型和LLM相关转化的初始浪潮相吻合。2025年保持了16篇的势头。</p>
+
+<h3>4.5 转化学者</h3>
+<figure>
+  <img src="figures/transfer_scholar_contribution.png" alt="转化学者贡献" loading="lazy" onclick="openLightbox(this.src)">
+  <figcaption>图14：按转化论文数排名的前25位学者，用颜色区分NVIDIA vs 学术界</figcaption>
+</figure>
+<p>顶尖已验证转化学者由学术合作者和NVIDIA研究者混合组成。第5章提供详细的个人画像。</p>
+</section>
+
+<!-- ===== SECTION 5: RESEARCHER PROFILES ===== -->
+<section id="s5">
+<div class="section-head">
+  <span class="section-num">§5</span>
+  <h2>研究者画像</h2>
+</div>
+<p>56篇已验证论文转化集中在一小群研究领袖周围。以下是<strong>前10位转化贡献者</strong>的画像——他们是谁、从事什么研究、以及他们的研究如何触达产品。</p>
+
+<div class="researcher-grid">
+
+<!-- 5.1 Dieter Fox -->
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">DF</div>
+    <div>
+      <div class="r-name">Dieter Fox</div>
+      <div class="r-meta">华盛顿大学教授 · NVIDIA机器人研究高级总监（双重任职） <span class="badge academic">学术界</span></div>
+      <div class="r-meta" style="margin-top:4px"><span class="badge direct">7 DIRECT</span> · 全部为通讯/末位作者</div>
+    </div>
+  </div>
+  <ul class="r-papers">
+    <li><span class="paper-id">arxiv-2957</span> (2020) 面向反应式物体交接的人手抓取分类 → <span class="badge direct">Isaac, CUDA</span></li>
+    <li><span class="paper-id">arxiv-2771</span> (2022) <strong>Factory</strong> — GPU原生SDF碰撞检测，20,000倍加速 → <span class="badge direct">Isaac Gym, PhysX</span></li>
+    <li><span class="paper-id">arxiv-2665</span> (2023) <strong>DeXtreme</strong> — 域随机化灵巧手训练 → <span class="badge direct">Isaac Gym, Omniverse Replicator</span></li>
+    <li><span class="paper-id">rss-0011</span> (2023) <strong>IndustReal</strong> — 接触密集型装配的仿真到真实迁移 → <span class="badge direct">Isaac Lab, Isaac ROS</span></li>
+    <li><span class="paper-id">rss-0004</span> (2024) <strong>AutoMate</strong> — 通用化装配策略 → <span class="badge direct">Isaac Sim, Isaac Lab</span></li>
+    <li><span class="paper-id">corl-0008</span> (2024) <strong>SkillGen</strong> — 自动化演示生成 → <span class="badge direct">Isaac Lab</span></li>
+    <li><span class="paper-id">corl-0001</span> (2025) <strong>VT-Refine</strong> — 视觉-触觉双臂装配 → <span class="badge direct">Isaac Lab, Warp, Newton</span></li>
+  </ul>
+  <p class="r-pattern">Fox提供总体研究领导力。每篇论文先发表于顶级venue（RSS、CoRL、NeurIPS），再进入产品集成——这是一种先学术验证、再产品化的审慎策略。</p>
+</div>
+
+<!-- 5.2 Mark Haoxing Ren -->
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">MR</div>
+    <div>
+      <div class="r-name">Mark Haoxing Ren</div>
+      <div class="r-meta">前NVIDIA高级研究科学家 · VLSI CAD与EDA <span class="badge academic">学术界</span></div>
+      <div class="r-meta" style="margin-top:4px"><span class="badge moderate">7 MODERATE</span> · 全部为通讯作者</div>
+    </div>
+  </div>
+  <ul class="r-papers">
+    <li><span class="paper-id">ispd-0003/0005</span> (2023) <strong>DREAMPlace/AutoDMP</strong> — GPU加速宏单元布局 → <span class="badge moderate">DREAMPlace, CUDA</span></li>
+    <li><span class="paper-id">arxiv-2641</span> (2023) <strong>ChipNeMo</strong> — 芯片设计领域适配LLM → <span class="badge moderate">NeMo</span></li>
+    <li><span class="paper-id">arxiv-2585</span> (2024) <strong>DRC-Coder</strong> — 自动化设计规则检查 → <span class="badge moderate">Marco</span></li>
+    <li><span class="paper-id">arxiv-2596</span> (2024) <strong>VerilogCoder</strong> — 自主Verilog生成 → <span class="badge moderate">Marco</span></li>
+    <li><span class="paper-id">arxiv-2611</span> (2024) LLM驱动标准单元布局优化 → <span class="badge moderate">Marco</span></li>
+    <li><span class="paper-id">arxiv-2552</span> (2025) <strong>Marco</strong> — 可配置多智能体框架 → <span class="badge moderate">Marco</span></li>
+  </ul>
+  <p class="r-pattern">全部为MODERATE转化——输入NVIDIA内部芯片设计工具链。Chia-Tung (Mark) Ho作为第一作者主导实现。</p>
+</div>
+
+<!-- 5.3 Arash Vahdat -->
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">AV</div>
+    <div>
+      <div class="r-name">Arash Vahdat</div>
+      <div class="r-meta">NVIDIA Research 高级研究科学家 <span class="badge nvidia">NVIDIA</span></div>
+      <div class="r-meta" style="margin-top:4px"><span class="badge moderate">5 MODERATE</span> · 关键扩散论文的第一作者</div>
+    </div>
+  </div>
+  <ul class="r-papers">
+    <li><span class="paper-id">neurips-0045</span> (2021)、<span class="paper-id">iclr-0033/0034</span> (2022) 基于分数的生成模型、扩散——被"改进扩散模型"博客系列引用 → <span class="badge moderate">MODERATE</span></li>
+    <li><span class="paper-id">arxiv-2522</span> (2026) <strong>Proteina-Complexa</strong> — 蛋白质结合剂设计 → <span class="badge direct">Proteina-Complexa, BioNeMo</span></li>
+  </ul>
+  <p class="r-pattern">与Karsten Kreis和Jan Kautz组成NVIDIA核心生成式AI三人组。2026年的Proteina-Complexa论文代表了最新的研究到产品类型：生成模型应用于药物发现。</p>
+</div>
+
+<!-- 5.4 Jan Kautz -->
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">JK</div>
+    <div>
+      <div class="r-name">Jan Kautz</div>
+      <div class="r-meta">NVIDIA 学习与感知研究副总裁 <span class="badge nvidia">NVIDIA</span></div>
+      <div class="r-meta" style="margin-top:4px"><span class="badge direct">5 DIRECT</span> · 全部为通讯作者</div>
+    </div>
+  </div>
+  <ul class="r-papers">
+    <li><span class="paper-id">arxiv-2971</span> (2020) <strong>UNAS</strong> — 神经架构搜索 → <span class="badge direct">TensorRT, CUDA</span></li>
+    <li><span class="paper-id">arxiv-3003</span> (2020) Bi3D立体深度估计 → <span class="badge direct">A100 GPU</span></li>
+    <li><span class="paper-id">arxiv-2614</span> (2024) <strong>Mamba-2-Hybrid</strong> 状态空间模型 → <span class="badge direct">NeMo, Megatron-Core</span> <em>(1个月转化周期)</em></li>
+    <li><span class="paper-id">arxiv-2594</span> (2024) <strong>Minitron</strong> — LLM剪枝/蒸馏 → <span class="badge direct">NeMo, TensorRT-LLM</span></li>
+  </ul>
+  <p class="r-pattern">研究组合横跨CV、NAS、SSM架构和LLM压缩——反映了对NVIDIA学习研究全领域的覆盖。Mamba-2-Hybrid实现了数据集中<strong>最快的转化周期：从arXiv到NeMo集成仅1个月</strong>。</p>
+</div>
+
+<!-- 5.5 Boris Ginsburg -->
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">BG</div>
+    <div>
+      <div class="r-name">Boris Ginsburg</div>
+      <div class="r-meta">NVIDIA Research总监 + 大学任职 <span class="badge academic">学术界</span></div>
+      <div class="r-meta" style="margin-top:4px"><span class="badge direct">5 DIRECT</span> · 全部为通讯作者</div>
+    </div>
+  </div>
+  <ul class="r-papers">
+    <li><span class="paper-id">arxiv-3026</span> (2020) 跨语言ASR迁移学习 → <span class="badge direct">NeMo 快速启动训练</span></li>
+    <li><span class="paper-id">arxiv-2674</span> (2023) <strong>Fast Conformer</strong> — 训练速度提升2.8倍 → <span class="badge direct">NeMo Canary</span></li>
+    <li><span class="paper-id">arxiv-2677</span> (2023) <strong>TDT</strong> — token与持续时间联合预测传感器 → <span class="badge direct">NeMo Parakeet-TDT</span></li>
+    <li><span class="paper-id">arxiv-2645</span> (2023) 长音频ASR → <span class="badge direct">NeMo Parakeet</span></li>
+    <li><span class="paper-id">arxiv-2629</span> (2024) ASR置信度估计 → <span class="badge direct">NeMo</span></li>
+  </ul>
+  <p class="r-pattern">语音研究在1-12个月内持续落地到NeMo。合作者Somshubra Majumdar、Jagadeesh Balam和Vitaly Lavrukhin构成NeMo语音核心团队。</p>
+</div>
+
+<!-- 5.6 - 5.10 -->
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">KK</div>
+    <div><div class="r-name">Karsten Kreis</div><div class="r-meta">NVIDIA Research 研究科学家 <span class="badge nvidia">NVIDIA</span> · <span class="badge direct">4 DIRECT</span></div></div>
+  </div>
+  <p style="font-size:13px;color:#555">去噪扩散GAN（iclr-0034）的第一作者。与Vahdat和Kautz共属NVIDIA生成式建模团队。全部四篇论文被NVIDIA两篇"改进扩散模型"博客系列引用。</p>
+</div>
+
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">IA</div>
+    <div><div class="r-name">Iretiayo Akinola</div><div class="r-meta">NVIDIA Research 研究科学家 <span class="badge nvidia">NVIDIA</span> · <span class="badge direct">4 DIRECT</span></div></div>
+  </div>
+  <p style="font-size:13px;color:#555">IndustReal（rss-0011）和AutoMate（rss-0004）的第一作者。专注接触密集型装配的仿真到真实迁移。全部四篇论文为DIRECT转化进入Isaac生态系统。与Dieter Fox和GEAR团队密切合作。</p>
+</div>
+
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">WY</div>
+    <div><div class="r-name">Wei Yang</div><div class="r-meta">NVIDIA Research 研究科学家 <span class="badge nvidia">NVIDIA</span> · <span class="badge direct">4 DIRECT</span></div></div>
+  </div>
+  <p style="font-size:13px;color:#555">人-机器人交接研究（arxiv-2957）和SynH2R（icra-0004）的第一作者。桥接计算机视觉与机器人学——手-物体交互、双臂装配。全部论文转化至Isaac Lab。</p>
+</div>
+
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">YC</div>
+    <div><div class="r-name">Yu-Wei Chao</div><div class="r-meta">NVIDIA Research 研究科学家 <span class="badge nvidia">NVIDIA</span> · <span class="badge direct">4 DIRECT</span></div></div>
+  </div>
+  <p style="font-size:13px;color:#555">Dexplore（corl-0002）和SKT-Hang（icra-0005）的第一作者。研究语义关键点用于任务理解和灵巧操控的可扩展控制。全部论文转化至Isaac Lab。</p>
+</div>
+
+<div class="researcher-card">
+  <div class="r-header">
+    <div class="r-avatar">CH</div>
+    <div><div class="r-name">Chia-Tung (Mark) Ho</div><div class="r-meta">NVIDIA Research 研究科学家 <span class="badge nvidia">NVIDIA</span> · <span class="badge moderate">4 MODERATE</span></div></div>
+  </div>
+  <p style="font-size:13px;color:#555">全部4篇论文的第一作者。NVIDIA Marco多智能体芯片设计框架的首席架构师。论文形成连贯序列：DRC检查 → Verilog生成 → 单元布局 → 统一Marco框架。全部为MODERATE——研究输入内部设计自动化。</p>
+</div>
+
+</div><!-- /researcher-grid -->
+
+<h3>跨领域模式</h3>
+<div class="eco-grid">
+  <div class="eco-card"><h5>合作集群</h5><p>三个紧密的研究团队主导转化：机器人仿真到真实迁移团队（Fox、Akinola、Yang、Chao）、生成式AI团队（Vahdat、Kreis、Kautz）和芯片设计团队（Ren、Ho）。Boris Ginsburg的语音团队最为独立自洽。</p></div>
+  <div class="eco-card"><h5>学术-产业双重性</h5><p>前十名中的三位（Fox、Ren、Ginsburg）被归类为学术界，但实际担任NVIDIA研究领导角色。他们转化的论文模糊了学术发表与产品开发之间的界限。</p></div>
+  <div class="eco-card"><h5>第一作者动态</h5><p>Mark Ho以第一作者身份完成其全部4篇论文——是实施主导者。Fox、Kautz和Ginsburg担任通讯/末位作者——是研究总监。Vahdat、Kreis、Yang和Chao在合作论文中共享第一作者身份。</p></div>
+</div>
+</section>
+
+<!-- ===== SECTION 6: PRODUCT TRANSFER STORIES ===== -->
+<section id="s6">
+<div class="section-head">
+  <span class="section-num">§6</span>
+  <h2>产品转化故事</h2>
+</div>
+
+<!-- 6.1 Isaac -->
+<h3>6.1 Isaac 生态系统 <span class="badge direct" style="font-size:11px;margin-left:8px">16篇论文</span></h3>
+<p>Isaac生态系统是NVIDIA的机器人AI开发平台，按照从仿真到训练再到部署的层次组织。它是已验证研究转化的最大接收方——16篇论文注入8个不同的Isaac产品。</p>
+
+<h4>架构概览</h4>
+<div class="table-wrap">
+<table>
+<thead><tr><th>层次</th><th>产品</th><th>角色</th><th>研究输入</th></tr></thead>
+<tbody>
+<tr><td>仿真</td><td>Isaac Sim</td><td>高保真数字孪生</td><td>Factory的SDF碰撞检测 → PhysX (arxiv-2771)</td></tr>
+<tr><td>训练</td><td>Isaac Lab</td><td>GPU加速RL/IL框架</td><td>DeXtreme域随机化 (arxiv-2665), IndustReal阻抗控制 (rss-0011)</td></tr>
+<tr><td>训练（前代）</td><td>Isaac Gym</td><td>独立GPU强化学习</td><td>Factory并行环境, DeXtreme魔方旋转</td></tr>
+<tr><td>部署</td><td>Isaac ROS</td><td>ROS 2 感知 + 控制</td><td>FoundationPose不确定性量化 (icra-0029)</td></tr>
+<tr><td>基础模型</td><td>Isaac GR00T</td><td>人形机器人基础模型</td><td>GR00T N1双系统架构 (arxiv-2567), MaskedMimic (siggraph-0009)</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>转化时间线——五个阶段</h4>
+<div class="timeline">
+  <div class="tl-phase">
+    <div class="tl-title">阶段1：奠基期 (2020-2021)</div>
+    <div class="tl-body">早期人-机器人交互研究。arxiv-2957关于反应式物体交接的抓取分类在发表同月（2020年3月）被博客报道，使用了早期的Isaac SDK + CUDA。</div>
+  </div>
+  <div class="tl-phase">
+    <div class="tl-title">阶段2：仿真到真实突破 (2022)</div>
+    <div class="tl-body"><strong>Factory</strong>（arxiv-2771, RSS 2022）解决了接触密集型装配的仿真瓶颈——20,000倍加速，1,024个并行的螺母螺栓装配实时运行。物理方法进入PhysX；NIST Task Board 1基准（60个CAD模型）随Isaac Gym Environments发布。<strong>DeXtreme</strong>（arxiv-2665）在Isaac Gym中训练一只灵巧手——单台OVX服务器上32小时完成相当于42年的机器人经验积累。</div>
+  </div>
+  <div class="tl-phase">
+    <div class="tl-title">阶段3：装配成熟期 (2023-2024)</div>
+    <div class="tl-body"><strong>IndustReal</strong>（rss-0011, RSS 2023）将Factory的方法扩展到真实硬件——通过Isaac ROS感知管道（Segment Anything + FoundationPose + 阻抗控制）在UR10e上进行齿轮装配。<strong>AutoMate</strong>（rss-0004, RSS 2024）泛化到多样化的零件几何形状。<strong>SkillGen</strong>（corl-0008, CoRL 2024）实现了自动化演示生成。</div>
+  </div>
+  <div class="tl-phase">
+    <div class="tl-title">阶段4：灵巧操作复兴 (2025)</div>
+    <div class="tl-body">DextrAH-RGB在Boston Dynamics Atlas上实现了零样本仿真到真实抓取。DexMimicGen从60个人工示例生成21K个双臂演示（90%的罐子分拣成功率）。GraspGen发布5700万个覆盖三种夹爪类型的合成抓取数据。</div>
+  </div>
+  <div class="tl-phase">
+    <div class="tl-title">阶段5：基础模型时代 (2024-2025)</div>
+    <div class="tl-body"><strong>MaskedMimic</strong>（siggraph-0009, SIGGRAPH 2024）通过运动补全统一人形机器人控制。 <strong>GR00T N1</strong>（arxiv-2567, 2025年3月）——20亿参数基础模型，双系统架构，76.8%人形操控成功率 vs 46.4%基线。模型权重在Hugging Face开源。</div>
+  </div>
+</div>
+
+<div class="callout">
+<strong>关键模式</strong>
+<strong>先学术验证、再产品化</strong>——每篇重要论文首先出现在顶级venue（RSS、ICRA、CoRL、NeurIPS、SIGGRAPH）。<strong>转化延迟各不相同</strong>——GR00T N1在发布当月即被博客报道；IndustReal用了2年。 <strong>R2D2渠道</strong>——NVIDIA的"机器人研发文摘"博客系列成为将论文转化为开发者叙事的主要载体。
+</div>
+
+<!-- 6.2 Dev Tools -->
+<h3>6.2 开发者工具 <span class="badge direct" style="font-size:11px;margin-left:8px">23篇论文</span></h3>
+<p>NVIDIA的开发者工具生态包含"水平"平台（CUDA、Warp、TensorRT——加速任意负载）和"垂直"工具（Sionna用于无线通信、Riva用于语音、Reflex用于游戏延迟、Marco用于芯片设计）。</p>
+
+<h4>CUDA与GPU：水平基座</h4>
+<p><strong>A100 GPU赋能CV研究（arxiv-3003）：</strong>两篇CVPR 2020论文利用了新的Ampere特性——第三代Tensor Core配合TF32实现相比Volta最高10倍吞吐量提升；2:4结构化稀疏使推理的等效计算吞吐量翻倍。模式清晰：新GPU硬件 → 更大模型、更快迭代。<strong>UNAS通过TensorRT + CUDA（arxiv-2971）：</strong>神经架构搜索框架通过TensorRT部署，配合V100 GPU上的自动混合精度，实现16倍推理加速。</p>
+
+<h4>研究到库：论文成为SDK功能</h4>
+<p><strong>Kaolin Library</strong>——arxiv-2604（2024）提供了Simplicits，一个处理网格、点云、高斯散射和NeRF的统一物理表示。变为 <code>kaolin.physics</code> API。<strong>Warp</strong>——Python中的GPU计算，横跨图形学、机器人学和物理学。<strong>Sionna → TensorRT → Aerial管道</strong>——神经接收器研究在Sionna中原型化，通过TensorRT硬化实现实时推理（A100上<1ms），最终进入Aerial（商用5G RAN）。</p>
+
+<h4>研究到产品：论文成为产品能力</h4>
+<p><strong>Riva</strong>——Parakeet ASR、Canary多语种和Parakeet-TDT模型 → Riva生产部署。<strong>Reflex</strong>——对15,000+玩家在不同延迟条件下的研究；前10%玩家在25ms比85ms命中2倍以上目标。直接支撑了Reflex SDK的设计。<strong>Marco与DREAMPlace</strong>——LLM多智能体芯片设计框架（VerilogCoder达到94.2%基准成功率，MCMM实现约60倍人类加速）。</p>
+
+<div class="callout">
+<strong>关键模式：水平 vs 垂直</strong>
+水平工具（CUDA、Warp、TensorRT）转化面窄（API/运行时变更）但影响面广。垂直工具（Sionna、Riva、Reflex）有更长的多阶段管道：仿真 → 优化 → 商业部署。Warp和Kaolin处于中间位置——具备领域感知但通用性足以服务图形学、机器人学和创意工具。
+</div>
+
+<!-- 6.3 NeMo -->
+<h3>6.3 NeMo 生态系统 <span class="badge direct" style="font-size:11px;margin-left:8px">12篇论文</span></h3>
+<p>NVIDIA NeMo是一个三层平台：<strong>NeMo Framework</strong>（端到端LLM训练）、<strong>Megatron-Core</strong>（分布式大规模训练）和<strong>NeMo Curator</strong>（数据管道）。自2020年以来，已有12篇研究论文转化至这个生态系统。</p>
+
+<h4>ASR/语音：最长的管道</h4>
+<p>语音谱系始于arxiv-3026（2020年5月）——基于CTC的ASR跨语言迁移学习，与NeMo"快速启动训练"工作流同月发布。<strong>Fast-Conformer</strong>（arxiv-2674，2023年5月）通过新颖的下采样设计实现2.8倍训练加速；11个月后驱动了<strong>Canary</strong>模型。<strong>Token-and-Duration Transducer</strong>（arxiv-2677，2023年4月）演化为<strong>Parakeet-TDT</strong>——推理速度提升64%，成为HuggingFace Open ASR排行榜上首个突破7.0WER的模型。长音频ASR研究（arxiv-2645）在财报电话会议和演讲级音频上验证了Parakeet。</p>
+
+<h4>LLM优化：对齐、压缩、架构</h4>
+<p><strong>SteerLM</strong>（arxiv-2644，2023年10月）用属性条件SFT替代复杂RLHF——用户可在推理时指定有用性/幽默感/创造力。43B模型在Vicuna上超越LLaMA-30B-RLHF。<strong>Minitron</strong>（arxiv-2594，2024年8月）系统化了LLM压缩——生成Minitron-8B、Mistral-NeMo-Minitron-8B（在9个基准上超越Llama-3.1-8B）。<strong>Mamba-2-Hybrid</strong>（arxiv-2614，2024年6月）——Mamba-2层在256K序列长度上快18倍；NeMo和Megatron-Core在<strong>一个月后</strong>即添加SSM支持——这是全数据集中最快的从论文到产品的转化。</p>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>年份</th><th>关键论文</th><th>产品集成</th><th>主题</th></tr></thead>
+<tbody>
+<tr><td>2020</td><td>arxiv-3026, arxiv-2962, arxiv-2965</td><td>NeMo ASR, BioMegatron, LAMP/MONAI</td><td>奠基：ASR迁移学习，生物医学NLP</td></tr>
+<tr><td>2023</td><td>arxiv-2674, arxiv-2677, arxiv-2644, arxiv-2645</td><td>Fast-Conformer, TDT, SteerLM, Parakeet</td><td>语音架构重构，LLM对齐</td></tr>
+<tr><td>2024</td><td>arxiv-2614, arxiv-2594, arxiv-2629</td><td>Mamba-2-Hybrid (1个月), Minitron, ASR置信度</td><td>LLM架构创新，模型压缩</td></tr>
+<tr><td>2025</td><td>arxiv-2579</td><td>NeMo Curator (Cosmos数据管道)</td><td>大规模数据治理</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="callout">
+<strong>关键模式：1-12个月转化周期</strong>
+NeMo展示了最快从论文到产品的转化速度：Mamba-2-Hybrid 1个月，SteerLM和Minitron 1-6个月，语音模型6-12个月。紧密的研究者-工程师协作（Ginsburg+Kuchaiev+Majumdar同时撰写论文和博客）驱动了这种速度。NeMo生态系统是NVIDIA"发表即交付"研究模式的最清晰范例。
+</div>
+
+<!-- 6.4 CUDA + GPU -->
+<h3>6.4 CUDA + GPU：沉默的基座 <span class="badge direct" style="font-size:11px;margin-left:8px">8篇论文</span></h3>
+<p>CUDA和GPU硬件是其他所有NVIDIA产品的基础——但它们的每篇论文博客报道量最少。<strong>158篇GPU架构论文但零篇验证博客转化</strong>，8篇论文连接到CUDA/A100——这个生态代表了研究转化中"沉默"的一面。</p>
+
+<div class="synthesis-box">
+<h4>为什么GPU架构零博客转化</h4>
+<p>GPU架构研究（158篇论文）发表在架构venue或arxiv上，然后在Blackwell、Hopper、Ampere等产品中出货——没有博客宣传。此处博客证据的缺失<strong>不代表转化的缺失</strong>。这反映了不同的沟通策略：硬件通过产品发布会和技术文档出货，而非研究博客。CUDA作为次级产品出现在每一个生态系统中——作为Isaac和NeMo负载的执行基座，作为DREAMPlace的加速核心。8篇将CUDA列为直接产品的论文远远低估了其实际影响。<strong>CUDA是水，不是鱼。</strong></p>
+</div>
+</section>
+
+<!-- ===== SECTION 7: GPT MOMENT SHIFT ===== -->
+<section id="s7">
+<div class="section-head">
+  <span class="section-num">§7</span>
+  <h2>GPT 时刻转变</h2>
+</div>
+<p><strong>GPT前（2020-2022）</strong>与<strong>GPT后（2023-2026）</strong>对比：</p>
+
+<div class="stat-row">
+  <div class="stat-card"><div class="stat-val">449 → 442</div><div class="stat-lbl">论文数（持平）</div></div>
+  <div class="stat-card"><div class="stat-val green">+178%</div><div class="stat-lbl">基础模型增长</div></div>
+  <div class="stat-card"><div class="stat-val" style="color:#D55E00">-64%</div><div class="stat-lbl">GPU架构缩减</div></div>
+  <div class="stat-card"><div class="stat-val teal">2.5×</div><div class="stat-lbl">转化率提升</div></div>
+</div>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>维度</th><th>GPT前</th><th>GPT后</th><th>变化</th></tr></thead>
+<tbody>
+<tr><td><strong>规模</strong></td><td>449篇论文</td><td>442篇论文</td><td style="color:#888">持平</td></tr>
+<tr><td><strong>组成</strong></td><td>以硬件为中心</td><td>以模型为中心</td><td style="color:#76B900">基础模型 +178%</td></tr>
+<tr><td><strong>合作模式</strong></td><td>88% NVIDIA主导</td><td>87% NVIDIA主导</td><td style="color:#888">稳定</td></tr>
+<tr><td><strong>转化率</strong></td><td class="rate">3.6%</td><td class="rate">9.0%</td><td style="color:#009E73">+2.5倍</td></tr>
+<tr><td><strong>直接转化 (DIRECT)</strong></td><td class="num">11</td><td class="num">29</td><td style="color:#009E73">+18</td></tr>
+<tr><td><strong>新增领域</strong></td><td>—</td><td>杂项 (3), 数据系统 (1)</td><td style="color:#76B900">初期多元化</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="synthesis-box">
+<h4>综合解读</h4>
+<p>GPT时刻并未促使NVIDIA产出更多研究——而是促使NVIDIA产出<strong>不同</strong>的研究。449→442的论文数量基本持平。但在表面稳定的背后是彻底的重新分配：基础模型吸纳了103篇净新增论文，而GPU架构减少了74篇。这种转变不仅关乎主题，还关乎操作层面——基础模型研究通过博客以11.0%的转化率触达产品，而GPU架构在同一渠道的转化率为零。博客作为面向开发者的媒介，天然适合软件和模型发布；硬件则通过产品发布会和数据表出货。因此，GPT后转化率的提升（3.6% → 9.0%）部分是结构性的：更多研究现在落在博客友好的领域，同时NVIDIA在系统性报道研究到产品连接方面也更加成熟。稳定的合作比例（88% → 87% NVIDIA主导）确认了组织模式——NVIDIA设定研究议程，学术界提供专业知识和合作者——在GPT冲击下完好无损。</p>
+</div>
+</section>
+
+<!-- ===== SECTION 8: KEY TAKEAWAYS ===== -->
+<section id="s8">
+<div class="section-head">
+  <span class="section-num">§8</span>
+  <h2>关键结论</h2>
+</div>
+
+<div class="takeaway-grid">
+  <div class="takeaway-card">
+    <div class="tk-num">1</div>
+    <div class="tk-title">真实管道，选择性证据</div>
+    <div class="tk-body">6.3%的论文具有验证的博客转化——这是有记录、公开可见的转化切片的下限。GPU架构悄然出货；基础模型高声量出货。</div>
+  </div>
+  <div class="takeaway-card">
+    <div class="tk-num">2</div>
+    <div class="tk-title">改变方向，而非扩大规模</div>
+    <div class="tk-body">总产出保持稳定（449 → 442），但基础模型增长178%，而GPU架构缩减64%。NVIDIA选择重新分配资源，而非扩张。</div>
+  </div>
+  <div class="takeaway-card">
+    <div class="tk-num">3</div>
+    <div class="tk-title">NVIDIA主导，学术界协作</div>
+    <div class="tk-body">87.9%的论文有NVIDIA第一作者，但92%有学术合作者参与。基础模型具有最强的学术参与度（25%为学术第一作者）。</div>
+  </div>
+  <div class="takeaway-card">
+    <div class="tk-num">4</div>
+    <div class="tk-title">Isaac与NeMo：最清晰的转化管道</div>
+    <div class="tk-body">16篇Isaac论文和12篇NeMo论文展示了研究如何通过博客渠道注入面向开发者的产品。</div>
+  </div>
+  <div class="takeaway-card">
+    <div class="tk-num">5</div>
+    <div class="tk-title">GPT后转化加速</div>
+    <div class="tk-body">转化率2.5倍的增长（3.6% → 9.0%）表明NVIDIA在传达研究到产品路径方面变得更加系统化。</div>
+  </div>
+  <div class="takeaway-card">
+    <div class="tk-num">6</div>
+    <div class="tk-title">博客是战略渠道，但非唯一渠道</div>
+    <div class="tk-body">53篇博客承载了验证研究转化。GPU架构以158篇论文但零篇验证博客转化，通过完全不同的渠道出货。</div>
+  </div>
+</div>
+</section>
+
+<!-- ===== APPENDIX ===== -->
+<section id="appendix">
+<div class="section-head">
+  <span class="section-num">§A</span>
+  <h2>附录：计划合规性检查</h2>
+</div>
+
+<div class="table-wrap">
+<table>
+<thead><tr><th>#</th><th>计划分析项</th><th>是否满足？</th><th>证据</th></tr></thead>
+<tbody>
+<tr><td class="num">1</td><td>领域静态分布</td><td style="color:#76B900">✓ 是</td><td>第2.1节 + 对应图表</td></tr>
+<tr><td class="num">2</td><td>含GPT划分的领域时间演化</td><td style="color:#76B900">✓ 是</td><td>第2.2节 + 对应图表</td></tr>
+<tr><td class="num">3</td><td>CV/GPU/LLM 2022年后增长检查</td><td style="color:#76B900">✓ 是</td><td>第2.3节、第2.4节</td></tr>
+<tr><td class="num">4</td><td>纯NVIDIA vs 学术合作比例</td><td style="color:#76B900">✓ 是</td><td>第3.1节</td></tr>
+<tr><td class="num">5</td><td>第一作者学术主导细分</td><td style="color:#76B900">✓ 是</td><td>第3.1节</td></tr>
+<tr><td class="num">6</td><td>各领域学术参与度排名</td><td style="color:#76B900">✓ 是</td><td>第3.3节</td></tr>
+<tr><td class="num">7</td><td>顶尖合作学者</td><td style="color:#76B900">✓ 是</td><td>第3.4节</td></tr>
+<tr><td class="num">8</td><td>转化证据类型分布</td><td style="color:#76B900">✓ 是</td><td>第4.1节（已校准：DIRECT/MODERATE）</td></tr>
+<tr><td class="num">9</td><td>具有产品足迹的论文数量</td><td style="color:#76B900">✓ 是</td><td>第4.1节：56/891 (6.3%)</td></tr>
+<tr><td class="num">10</td><td>产品级映射（哪些产品）</td><td style="color:#76B900">✓ 是</td><td>第4.3节</td></tr>
+<tr><td class="num">11</td><td>领域到产品落地分析</td><td style="color:#76B900">✓ 是</td><td>第4.2节（各领域转化率）</td></tr>
+<tr><td class="num">12</td><td>学者对产品转化的贡献</td><td style="color:#76B900">✓ 是</td><td>第4.5节、第5章</td></tr>
+</tbody>
+</table>
+</div>
+<p style="font-size:14px;color:#76B900;font-weight:600;margin-top:12px">全部12项计划分析以校准数据满足。</p>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="report-footer">
+  <p style="margin-top:8px">生成于 2026-06-05 · 891篇论文 · 3,678篇博客文章 · 14个领域 · 三阶段验证转化管道</p>
+  <p style="margin-top:10px">内容许可：报告文字采用 <a rel="license" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a>。图片/插图 © 2026 Wenqin Shao（邵文钦），保留所有权利。代码示例除非另有说明，采用 MIT 许可。第三方材料保留其各自权利。</p>
+</footer>
+
+</main>
+
+<!-- ===== BACK TO TOP ===== -->
+<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="回到顶部">↑</button>
+
+<!-- ===== LIGHTBOX ===== -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img src="" alt="" id="lightboxImg">
+</div>
+
+<script>
+// 侧边栏滚动监听
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.sidebar-nav a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      navLinks.forEach(link => {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+      });
+    }
+  });
+}, { rootMargin: '-10% 0px -80% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// 回到顶部按钮
+const btn = document.getElementById('backToTop');
+window.addEventListener('scroll', () => {
+  btn.classList.toggle('visible', window.scrollY > 600);
+});
+
+// 图片灯箱
+function openLightbox(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.add('show');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('show');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+</script>
+
+</body>
+</html>
