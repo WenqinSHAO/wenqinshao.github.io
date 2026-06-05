@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>KV Cache Reuse as a Transport and Control Problem</title>
+<style>
+:root {
+  --ink:#102033;
+  --muted:#566b81;
+  --soft:#f5f8fc;
+  --line:#d8e5f7;
+  --blue:#2563eb;
+  --navy:#0b3558;
+  --teal:#0f766e;
+  --orange:#f97316;
+  --purple:#7c3aed;
+  --red:#b42318;
+  --green:#067647;
+  --card:#fbfdff;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  margin:0;
+  font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color:var(--ink);
+  background:var(--soft);
+  line-height:1.52;
+}
+a { color:#0b63ce; text-decoration:none; }
+a:hover { text-decoration:underline; }
+.report { max-width:1220px; margin:0 auto; padding:34px 24px 76px; }
+.hero {
+  background:linear-gradient(135deg,#07172b 0%,#0b3558 58%,#0f766e 100%);
+  color:white;
+  border-radius:28px;
+  padding:44px 50px;
+  box-shadow:0 24px 60px rgba(10,40,80,.28);
+}
+.kicker { text-transform:uppercase; letter-spacing:.12em; font-size:12px; font-weight:850; color:#9bd4ff; }
+.hero h1 { font-size:50px; line-height:1.03; letter-spacing:-.045em; margin:8px 0 14px; max-width:1060px; }
+.subtitle { font-size:19px; color:rgba(255,255,255,.86); max-width:980px; margin:0; }
+.meta { display:flex; flex-wrap:wrap; gap:10px; margin-top:24px; }
+.pill { display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(255,255,255,.23); color:#eaf6ff; background:rgba(255,255,255,.10); border-radius:999px; padding:8px 12px; font-size:12px; font-weight:750; }
+nav.toc { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin:22px 0; }
+nav.toc a { background:white; border:1px solid var(--line); border-radius:14px; padding:11px 13px; font-size:12.5px; font-weight:800; color:var(--navy); box-shadow:0 8px 24px rgba(20,60,100,.06); }
+section { background:white; border:1px solid var(--line); border-radius:26px; margin:22px 0; padding:30px 34px; box-shadow:0 18px 50px rgba(16,40,70,.07); scroll-margin-top:20px; }
+h2 { margin:0 0 8px; font-size:31px; line-height:1.12; letter-spacing:-.03em; color:#092a49; }
+h3 { margin:18px 0 8px; font-size:19px; color:#0b3558; }
+h4 { margin:14px 0 6px; color:#244763; }
+p { margin:10px 0; }
+ul,ol { margin:8px 0 8px 24px; padding:0; }
+li { margin:5px 0; }
+.takeaway { border-left:5px solid var(--blue); background:#eef6ff; padding:12px 14px; border-radius:0 14px 14px 0; font-size:16px; color:#20384f; margin:12px 0 18px; }
+.warn { border-left:5px solid var(--orange); background:#fff7ed; padding:12px 14px; border-radius:0 14px 14px 0; color:#5c3b10; }
+.guard { border-left:5px solid var(--red); background:#fff1f0; padding:12px 14px; border-radius:0 14px 14px 0; color:#681f1a; }
+.good { border-left:5px solid var(--green); background:#ecfdf3; padding:12px 14px; border-radius:0 14px 14px 0; color:#184e35; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; align-items:start; }
+.grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; align-items:start; }
+.card { background:var(--card); border:1px solid #dce8f6; border-radius:18px; padding:16px 18px; }
+.card h3, .card h4 { margin-top:0; }
+.small { font-size:13px; color:var(--muted); }
+.micro { font-size:11.5px; color:var(--muted); line-height:1.35; }
+.metric { font-size:29px; font-weight:900; color:#0b3558; letter-spacing:-.035em; line-height:1.05; }
+.metric-sub { font-size:12px; color:var(--muted); margin-top:4px; }
+.badge { display:inline-block; border-radius:999px; background:#e8f2ff; color:#0b3558; padding:4px 9px; margin:2px 4px 2px 0; font-size:12px; font-weight:800; }
+.badge.orange { background:#fff0df; color:#9a3412; }
+.badge.green { background:#e5f8f2; color:#065f46; }
+.badge.purple { background:#f0e7ff; color:#5b21b6; }
+.badge.red { background:#fff1f0; color:#b42318; }
+.plotbox { border:1px solid #dce8f6; border-radius:20px; padding:12px; background:#fbfdff; overflow:hidden; }
+.plot { width:100%; height:auto; display:block; }
+.caption { font-size:12px; color:#5d7084; margin-top:8px; }
+.formula { font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; background:#0d2139; color:#eaf6ff; padding:14px 16px; border-radius:16px; overflow:auto; font-size:13px; line-height:1.5; white-space:pre; }
+.flow { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin:18px 0; }
+.flow .step { background:#fbfdff; border:1px solid #dce8f6; border-radius:16px; padding:14px; min-height:126px; }
+.flow .step b { display:block; color:#0b3558; margin-bottom:7px; }
+table { width:100%; border-collapse:collapse; margin:14px 0; font-size:13px; }
+th,td { border-bottom:1px solid #e4edf8; padding:10px 9px; vertical-align:top; text-align:left; }
+th { background:#f1f6fd; color:#0b3558; font-weight:850; }
+tbody tr:hover td { background:#fbfdff; }
+.ref { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; margin:0 2px; border-radius:999px; background:#e6f1ff; color:#0b63ce; font-size:11px; font-weight:900; vertical-align:super; }
+.source-list li { margin:8px 0; }
+.evidence { font-size:11px; font-weight:850; text-transform:uppercase; letter-spacing:.04em; color:#49657f; display:block; margin-bottom:6px; }
+.two-col-table td:first-child { width:22%; font-weight:800; color:#0b3558; }
+.wide-figure { margin:18px 0 18px; }
+.wide-figure .plotbox { padding:16px; }
+.support-grid { display:grid; grid-template-columns:1.08fr .92fr; gap:18px; align-items:start; margin-top:16px; }
+.grid5 { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; align-items:stretch; }
+.signal-cards .card { padding:14px 15px; }
+.signal-cards h3 { font-size:15.5px; margin-bottom:6px; }
+.signal-cards p { font-size:12.5px; line-height:1.34; margin:0; }
+.figure-note { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+.figure-note .badge { margin:0; }
+.tight-table table { margin-top:8px; }
+
+/* Final readability and export pass */
+td, th { overflow-wrap:anywhere; }
+section#compare table, section#ledger table { font-size:12px; }
+section#sources a { overflow-wrap:anywhere; word-break:break-word; }
+.final-note { font-size:12px; color:rgba(255,255,255,.78); margin-top:12px; }
+.caption { overflow-wrap:normal; }
+@media print {
+  @page { size:A4; margin:12mm; }
+  html { scroll-behavior:auto; }
+  body { background:white; line-height:1.42; }
+  .report { max-width:none; padding:0; }
+  .hero { margin:0 0 8mm; padding:12mm; border-radius:0; box-shadow:none; }
+  .hero h1 { font-size:30px; line-height:1.08; max-width:none; }
+  .subtitle { font-size:13.5px; max-width:none; }
+  .pill { font-size:9.5px; padding:5px 8px; }
+  section { margin:0 0 8mm; padding:9mm; border-radius:0; box-shadow:none; break-inside:auto; page-break-inside:auto; }
+  h2 { font-size:22px; }
+  h3 { font-size:15px; }
+  p, li { font-size:11.2px; }
+  table { font-size:9.2px; }
+  th,td { padding:5px 4px; }
+  .takeaway,.warn,.guard,.good { font-size:10.8px; padding:7px 9px; }
+  .small { font-size:9.5px; }
+  .micro { font-size:8.5px; }
+  .plotbox, .card, table { break-inside:avoid; page-break-inside:avoid; }
+  .caption { font-size:8.8px; }
+  .metric { font-size:20px; }
+  .formula { font-size:9px; padding:8px 10px; }
+  nav.toc { display:none; }
+  h2,h3,h4 { break-after:avoid; page-break-after:avoid; }
+}
+
+@media (max-width:980px) {
+  .grid2,.grid3,.grid4,.grid5,.support-grid,nav.toc,.flow { grid-template-columns:1fr; }
+  .hero h1 { font-size:36px; }
+  .hero { padding:34px 26px; }
+  section { padding:22px; }
+}
+@media print {
+  body { background:white; }
+  .report { max-width:none; padding:0; }
+  .hero, section { box-shadow:none; border-radius:0; break-inside:auto; page-break-inside:auto; }
+  nav.toc { display:none; }
+  table, .plotbox, .card, .takeaway, .warn, .guard, .good { break-inside:avoid; page-break-inside:avoid; }
+  h2,h3 { break-after:avoid; page-break-after:avoid; }
+}
+</style>
+</head>
+<body>
+<div class="report">
+<header class="hero">
+<div class="kicker">KV cache reuse · transport and control technical report</div>
+<h1>KV reuse only pays off when saved prefill survives placement, transfer, and control.</h1>
+<p class="subtitle">A transport-focused technical report on when reusable KV state improves LLM serving: how the serving stack finds compatible state, routes or materializes it, keeps it off the decode critical path, and decides when recomputation is still the safer path.</p>
+<div class="meta"><span class="pill">Scope: transport, tiers, direct paths, CXL, NIXL, Mooncake TE, Beluga, PrfaaS</span><span class="pill">Method: source-grounded synthesis plus clearly labeled qualitative illustrations</span><span class="pill">Audience: LLM serving, cloud infrastructure, networking, and memory-system readers</span></div>
+<div class="final-note">Prepared for source-grounded technical reading; pricing and product pages should be rechecked before reuse in external materials.</div>
+</header>
+<nav class="toc"><a href="#abstract">0. Abstract</a><a href="#method">1. Scope/method</a><a href="#ledger">2. Evidence ledger</a><a href="#signals">3. Signals</a><a href="#economics">4. Economics</a><a href="#decision">5. Decision model</a><a href="#structure">6. Structural lens</a><a href="#journey">7. Request journey</a><a href="#quant">8. Quant case</a><a href="#abi">9. KV ABI</a><a href="#mooncake">10. Mooncake TE</a><a href="#beluga">11. Beluga</a><a href="#dynamo">12. Dynamo/NIXL</a><a href="#prfaas">13. PrfaaS</a><a href="#compare">14. Comparison</a><a href="#benchmark">15. Evaluation/governance</a><a href="#sources">Sources</a></nav>
+<section id="abstract">
+<h2>0. Abstract</h2>
+<div class="takeaway">Hit rate is an intermediate variable. Serving operators ultimately care about SLO-qualified goodput, P50/P95 TTFT, TPOT stability, GPU idle time, cost per useful token, and safe cross-request reuse.</div>
+<div class="grid2">
+<div>
+<p>KV reuse converts prefill compute into a transport and control problem. A reusable prefix or block is valuable only after the serving stack answers four questions: is the state compatible, where is it, how fast can it become engine-ready, and what is the fallback if the answer changes under load?</p>
+<p>This report focuses on the <strong>transport-facing layer</strong> of KV reuse: external KV stores, multi-tier materialization, direct memory paths, CXL-like pooling, disaggregated prefill/decode handoff, and routing/control metadata that determine whether saved prefill remains visible as lower TTFT or higher goodput.</p>
+<div class="formula">reuse_value ~= p_hit * prefill_compute_saved
+              - storage_cost
+              - p_fetch * transfer_cost
+              - lookup_and_control_cost
+              - repair_or_fallback_cost
+              - tail_latency_risk
+              - quality_and_governance_risk</div>
+</div>
+<div class="grid3">
+<div class="card"><span class="evidence">reported</span><div class="metric">3.8×</div><div class="metric-sub">Throughput improvement in vLLM × Mooncake Store on realistic Codex/SWE-bench Pro agentic traces.</div></div>
+<div class="card"><span class="evidence">reported</span><div class="metric">46×</div><div class="metric-sub">P50 TTFT reduction in the same experiment.</div></div>
+<div class="card"><span class="evidence">reported</span><div class="metric">1.7% → 92.2%</div><div class="metric-sub">Cache-hit-rate jump that makes the transport path first-order rather than incidental.</div></div>
+</div>
+</div>
+<div class="warn"><strong>Evidence disclaimer.</strong> Quantitative values in this report are either cited from the named source, derived from explicitly stated assumptions, or marked as illustrative. Illustrative curves and movement lower bounds are used to make the system trade-off tangible; they are not presented as measured end-to-end benchmark results.</div>
+<p class="small">The vLLM × Mooncake report attributes the system gain to a distributed KV pool that raises cache hit rate while keeping transfers efficient; it also reports &gt;95% hit rate in a 12-to-60 GPU scaling test. <a class="ref" href="https://vllm.ai/blog/2026-05-06-mooncake-store">S1</a></p>
+</section>
+<section id="method">
+<h2>1. Data scope and methodology</h2>
+<div class="takeaway">This is a transport-focused technical report, not a comprehensive academic survey. It selects systems and papers that change how KV state is placed, moved, materialized, routed, or governed across service and memory boundaries.</div>
+<div class="grid2">
+<div>
+<h3>Scope boundary</h3>
+<table class="two-col-table">
+<tbody>
+<tr><td>In scope</td><td>External KV stores, prefill/decode handoff, distributed KV transfer, CXL or remote-memory pooling, direct GPU paths, KV-aware routing, metadata/ABI requirements, and transport-visible governance.</td></tr>
+<tr><td>Context only</td><td>Local engine layout, prompt/prefix caching, compression/retention, agent workflow reuse, and cross-model reuse are included only when they change transport demand or compatibility requirements.</td></tr>
+<tr><td>Out of scope</td><td>A complete taxonomy of all KV compression, eviction, semantic caching, transformer-efficiency, MoE, compiler, or agent-framework work.</td></tr>
+</tbody>
+</table>
+</div>
+<div>
+<h3>Evidence handling</h3>
+<table class="two-col-table">
+<tbody>
+<tr><td>Reported</td><td>Numbers copied or paraphrased from the cited paper, product document, or project blog, with the original workload and assumptions kept visible where possible.</td></tr>
+<tr><td>Derived</td><td>Simple calculations from stated quantities, such as KV object size divided by peak bandwidth. These are lower bounds unless otherwise stated.</td></tr>
+<tr><td>Sourced inference</td><td>Architecture interpretation supported by source text but not usually stated as a single sentence by the source.</td></tr>
+<tr><td>Illustrative</td><td>Qualitative curves or diagrams used to explain trade-offs. They guide intuition rather than replacing measurement.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="good"><strong>Reading rule.</strong> Compare systems by the boundary they move and the metric they optimize. A direct handoff mechanism, a CXL memory pool, and a cross-cluster prefill service are not substitutes; they occupy different points in the transport/control design space.</div>
+</section>
+<section id="ledger">
+<h2>2. Claim and evidence ledger</h2>
+<div class="takeaway">The ledger makes the report auditable: each major claim is tied to an evidence type, a source trail, and the condition under which the claim should be read.</div>
+<table>
+<thead><tr><th>Claim used in this report</th><th>Evidence type</th><th>Condition / caveat</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td>KV reuse is best judged by SLO-qualified goodput, TTFT/TPOT stability, and fleet utilization rather than hit rate alone.</td><td>Sourced inference</td><td>Derived from serving-oriented papers and product systems where reuse must survive queueing, transfer, and scheduling.</td><td>S1, S3, S7, S9</td></tr>
+<tr><td>Distributed KV pooling can sharply increase hit rate for agentic traces and expose transport as a first-order bottleneck.</td><td>Reported</td><td>vLLM × Mooncake Store reports 1.7% to 92.2% hit-rate movement, 3.8× throughput, and 46× P50 TTFT improvement under its stated workload.</td><td>S1</td></tr>
+<tr><td>A 100K-token Kimi-style FP8 KV object is large enough that movement cost can dominate a request path.</td><td>Reported + derived</td><td>The 3.8 GB anchor is model- and representation-specific; capacity-equivalent calculations inherit that assumption.</td><td>S1, S16</td></tr>
+<tr><td>Public cached-input discounts are strong economic signals for reuse but not proof of a specific internal KV implementation.</td><td>Reported pricing + interpretation</td><td>OpenAI and DeepSeek pricing pages demonstrate commercial value assigned to reused input state; they do not expose provider internals. Exact prices are point-in-time and should be rechecked.</td><td>S4, S5, S6</td></tr>
+<tr><td>Mooncake TE is best read as a transfer-plan substrate plus metadata/store control, not just a raw RDMA wrapper.</td><td>Sourced inference</td><td>The transport gain depends on segment abstraction, batch transfer, endpoint choice, and metadata orchestration.</td><td>S2, S3</td></tr>
+<tr><td>CXL pooling is not automatically KV-aware; Beluga adds KV indexing, layout conversion, and access orchestration above the memory substrate.</td><td>Sourced inference</td><td>The distinction matters because raw load/store memory does not by itself know model, block, RoPE, or tier semantics.</td><td>S8</td></tr>
+<tr><td>Dynamo/NIXL is strongest as a direct prefill-to-decode transfer path within an NVIDIA-aligned serving stack.</td><td>Reported + interpretation</td><td>The report treats it as focused direct handoff rather than a full long-lived multi-tier KV lifecycle.</td><td>S7</td></tr>
+<tr><td>PrfaaS is viable only when remote prefill savings exceed queueing, returned-KV transfer, metadata, and tail-risk costs.</td><td>Sourced inference</td><td>The boundary shift depends on selective admission, bandwidth awareness, and model-side KV footprint reduction.</td><td>S9</td></tr>
+</tbody>
+</table>
+</section>
+<section id="signals">
+<h2>3. Why this became a systems topic</h2>
+<div class="takeaway">KV-cache work has moved from local memory layout into a transport-facing systems problem: reusable state now crosses service, tier, host, rack, and sometimes model/workflow boundaries. The figure is a scoped signal map, not a bibliometric claim.</div>
+<div class="wide-figure">
+<div class="plotbox">
+<svg aria-label="Scoped KV-cache signal map" class="plot" role="img" viewBox="0 0 1100 430">
+<defs><linearGradient id="bargrad_v8" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3b82f6"></stop><stop offset="1" stop-color="#0f766e"></stop></linearGradient></defs>
+<text fill="#0b3558" font-size="21" font-weight="900" x="54" y="36">Scoped signal map: KV cache becomes multi-branch serving infrastructure</text>
+<text fill="#536b83" font-size="13" x="54" y="62">Indicative lower-bound counts in this report corpus. The point is branching across memory, transport, routing, and workflow boundaries.</text>
+<line stroke="#d8e5f7" x1="80" x2="1030" y1="300" y2="300"></line>
+<line stroke="#e8eff8" x1="80" x2="1030" y1="238" y2="238"></line>
+<line stroke="#e8eff8" x1="80" x2="1030" y1="176" y2="176"></line>
+<line stroke="#e8eff8" x1="80" x2="1030" y1="114" y2="114"></line>
+<text fill="#60758d" font-size="11" text-anchor="end" x="68" y="304">0</text>
+<text fill="#60758d" font-size="11" text-anchor="end" x="68" y="242">10</text>
+<text fill="#60758d" font-size="11" text-anchor="end" x="68" y="180">20</text>
+<text fill="#60758d" font-size="11" text-anchor="end" x="68" y="118">30</text>
+<rect fill="url(#bargrad_v8)" height="31" rx="12" width="145" x="150" y="269"></rect><text fill="#0b3558" font-size="20" font-weight="900" text-anchor="middle" x="222" y="257">&gt;=5</text><text fill="#0b3558" font-size="17" font-weight="900" text-anchor="middle" x="222" y="328">2023</text><text fill="#536b83" font-size="13" text-anchor="middle" x="222" y="352">layout + prefix</text><text fill="#536b83" font-size="11" text-anchor="middle" x="222" y="374">PagedAttention, CacheGen</text>
+<rect fill="url(#bargrad_v8)" height="50" rx="12" width="145" x="375" y="250"></rect><text fill="#0b3558" font-size="20" font-weight="900" text-anchor="middle" x="447" y="238">&gt;=8</text><text fill="#0b3558" font-size="17" font-weight="900" text-anchor="middle" x="447" y="328">2024</text><text fill="#536b83" font-size="13" text-anchor="middle" x="447" y="352">PD boundary</text><text fill="#536b83" font-size="11" text-anchor="middle" x="447" y="374">Splitwise, DistServe</text>
+<rect fill="url(#bargrad_v8)" height="112" rx="12" width="145" x="600" y="188"></rect><text fill="#0b3558" font-size="20" font-weight="900" text-anchor="middle" x="672" y="176">&gt;=18</text><text fill="#0b3558" font-size="17" font-weight="900" text-anchor="middle" x="672" y="328">2025</text><text fill="#536b83" font-size="13" text-anchor="middle" x="672" y="352">platform + store</text><text fill="#536b83" font-size="11" text-anchor="middle" x="672" y="374">Mooncake, LMCache</text>
+<rect fill="url(#bargrad_v8)" height="180" rx="12" width="145" x="825" y="120"></rect><text fill="#0b3558" font-size="20" font-weight="900" text-anchor="middle" x="897" y="108">&gt;=29</text><text fill="#0b3558" font-size="17" font-weight="900" text-anchor="middle" x="897" y="328">2026</text><text fill="#536b83" font-size="13" text-anchor="middle" x="897" y="352">routing, CXL, agents</text><text fill="#536b83" font-size="11" text-anchor="middle" x="897" y="374">Beluga, PrfaaS, Agentix</text>
+<text fill="#60758d" font-size="11" x="54" y="408">Reading rule: the bar heights show scoped corpus density; the branch labels show why transport/control became first-order.</text>
+</svg>
+<div class="caption">Figure 1. A full-width signal map makes the branch-out visible: after 2024, KV work is no longer only allocation and prefix caching; it reaches stores, direct paths, routing policy, CXL-like memory, and agentic workflows.</div>
+</div>
+</div>
+<div class="grid5 signal-cards">
+<div class="card"><h3>Local substrate</h3><p>Paged KV, radix caches, prefix cache. The object is still engine-local.</p></div>
+<div class="card"><h3>State service</h3><p>External KV pool, distributed metadata, and hot/warm/cold tiers make reuse a service.</p></div>
+<div class="card"><h3>Transport substrate</h3><p>RDMA, GPUDirect, NIXL, NVMe-oF, and CXL-like semantics decide materialization cost.</p></div>
+<div class="card"><h3>Control plane</h3><p>Cache-aware routing, load balancing, SLO admission, and future-use hints decide the action.</p></div>
+<div class="card"><h3>Workflow boundary</h3><p>Agent turns, tool stalls, shared workspaces, and cross-model compatibility widen reuse.</p></div>
+</div>
+<p class="small">Earlier KV work mainly optimized live local memory: allocation, paging, retention, and repeated prompt fragments. Recent work makes KV cross service boundaries: prefill to decode, engine to external store, GPU to DRAM or SSD, pod to pod, and in some proposals model or agent to model or agent.</p>
+</section>
+<section id="economics">
+<h2>4. Economic motivation: cache-friendly behavior is already priced.</h2>
+<div class="takeaway">Public cached-input discounts validate the economic surface: providers value reuse. They do not by themselves prove any specific internal implementation such as raw KV exposure, cross-node KV transfer, or a particular memory tier.</div>
+<div class="wide-figure">
+<div class="plotbox">
+<svg aria-label="Official cached-input pricing ratio" class="plot" role="img" viewBox="0 0 1100 370">
+<text fill="#0b3558" font-size="20" font-weight="900" x="32" y="34">Input cache-miss price / input cache-hit price</text>
+<text fill="#60758d" font-size="12" x="32" y="60">Point-in-time official pricing. Economic signal only; not an implementation claim.</text>
+<line stroke="#d8e5f7" x1="265" x2="965" y1="95" y2="95"></line>
+<line stroke="#d8e5f7" x1="265" x2="965" y1="170" y2="170"></line>
+<line stroke="#d8e5f7" x1="265" x2="965" y1="245" y2="245"></line>
+<text fill="#20384f" font-size="15" font-weight="850" x="32" y="103">OpenAI GPT-5.5</text>
+<rect fill="#e7f1ff" height="34" rx="12" width="680" x="265" y="76"></rect><rect fill="#2563eb" height="34" rx="12" width="57" x="265" y="76"></rect><text fill="#0b3558" font-size="14" font-weight="900" x="335" y="98">10.0×</text><text fill="#60758d" font-size="12" x="265" y="126">$5.00 miss vs $0.50 hit / 1M input tokens</text>
+<text fill="#20384f" font-size="15" font-weight="850" x="32" y="178">DeepSeek V4 Flash</text>
+<rect fill="#e7f1ff" height="34" rx="12" width="680" x="265" y="151"></rect><rect fill="#2563eb" height="34" rx="12" width="283" x="265" y="151"></rect><text fill="white" font-size="14" font-weight="900" text-anchor="end" x="536" y="173">50.0×</text><text fill="#60758d" font-size="12" x="265" y="201">$0.14 miss vs $0.0028 hit / 1M input tokens; output $0.28 / 1M</text>
+<text fill="#20384f" font-size="15" font-weight="850" x="32" y="253">DeepSeek V4 Pro</text>
+<rect fill="#e7f1ff" height="34" rx="12" width="680" x="265" y="226"></rect><rect fill="#2563eb" height="34" rx="12" width="680" x="265" y="226"></rect><text fill="white" font-size="14" font-weight="900" text-anchor="end" x="930" y="248">120.0×</text><text fill="#60758d" font-size="12" x="265" y="276">$0.435 miss vs $0.003625 hit / 1M input tokens; output $0.87 / 1M</text>
+<text fill="#60758d" font-size="12" x="32" y="326">DeepSeek prices are from the official Models &amp; Pricing page; prices are per 1M tokens and may change.</text>
+<text fill="#60758d" font-size="12" x="32" y="346">Use this chart as an operator-economics motivation, not as evidence of an exposed KV API or a specific backend design.</text>
+</svg>
+<div class="caption">Figure 2. The full-width pricing plot makes the cache-hit economic signal immediately visible. It motivates why providers and customers care about reuse, while remaining deliberately agnostic about internal implementation.</div>
+</div>
+</div>
+<div class="support-grid">
+<div>
+<p>The economics of cached input creates a direct design pressure on application frameworks: stable system prompts, tool schemas, shared documents, and workspace memory should be made cacheable whenever policy permits. But provider pricing is only a market-facing surface. A report about serving architecture should avoid reading it as evidence of a specific internal KV transport mechanism.</p>
+<div class="warn small">Use pricing to motivate why customers and providers care. Use system papers and product docs to argue how reuse may be implemented inside a serving stack. DeepSeek prices below are taken from the official Models &amp; Pricing page, where prices are stated per 1M tokens and may vary over time. <a class="ref" href="https://openai.com/api/pricing/">S4</a><a class="ref" href="https://api-docs.deepseek.com/quick_start/pricing">S5</a></div>
+</div>
+<div class="tight-table">
+<table>
+<thead><tr><th>Provider / model</th><th>Input hit</th><th>Input miss</th><th>Miss / hit</th></tr></thead>
+<tbody>
+<tr><td>OpenAI GPT-5.5</td><td>$0.50 / 1M</td><td>$5.00 / 1M</td><td>10.0×</td></tr>
+<tr><td>DeepSeek V4 Flash</td><td>$0.0028 / 1M</td><td>$0.14 / 1M</td><td>50.0×</td></tr>
+<tr><td>DeepSeek V4 Pro</td><td>$0.003625 / 1M</td><td>$0.435 / 1M</td><td>120.0×</td></tr>
+</tbody>
+</table>
+<p class="micro">Output prices are $30.00 / 1M for OpenAI GPT-5.5 in the cited OpenAI pricing page, and $0.28 / 1M / $0.87 / 1M for DeepSeek V4 Flash / Pro in the cited DeepSeek pricing page.</p>
+</div>
+</div>
+</section>
+<section id="decision">
+<h2>5. Operator decision model: route, move, repair, compress, or recompute.</h2>
+<div class="takeaway">The central policy question in KV reuse is the action policy. A controller chooses the cheapest safe state action under SLO, not maximize nominal hit rate.</div>
+<table>
+<thead><tr><th>Situation</th><th>Likely better action</th><th>Transport/control requirement</th><th>Common failure mode</th></tr></thead>
+<tbody>
+<tr><td>Hot compatible KV is already resident near a lightly loaded worker.</td><td><strong>Route request to state.</strong></td><td>Fresh location index, load signal, tenant policy, cache-affinity scoring.</td><td>Affinity creates hotspots and hurts SLO.</td></tr>
+<tr><td>KV is large, compatible, and near enough to arrive before recompute.</td><td><strong>Move state to request.</strong></td><td>Memory descriptor, batch transfer plan, background I/O, completion event.</td><td>Transfer tail exceeds saved prefill.</td></tr>
+<tr><td>KV is cold, fragmented, or remote, but future reuse is probable.</td><td><strong>Prefetch or demote asynchronously.</strong></td><td>Workflow hint, TTL, tier score, queue-aware admission.</td><td>Pollutes warm tier or moves unused bytes.</td></tr>
+<tr><td>KV match is approximate or only partly compatible.</td><td><strong>Repair selectively.</strong></td><td>Deviation score, recompute boundary, quality fallback, provenance.</td><td>Quality drift or hidden correctness loss.</td></tr>
+<tr><td>Decode loop is live and token-by-token latency dominates.</td><td><strong>Keep live state local; avoid remote per-token fetch.</strong></td><td>Hot HBM allocation, retention/compression policy, decode admission.</td><td>Remote read enters the critical loop and destroys TPOT.</td></tr>
+<tr><td>Tenant, model, tokenizer, RoPE, dtype, or layout mismatches.</td><td><strong>Reject reuse and recompute.</strong></td><td>Compatibility ABI, validity epoch, policy gate, auditable fallback.</td><td>Unsafe reuse or data leakage.</td></tr>
+</tbody>
+</table>
+</section>
+<section id="structure">
+<h2>6. Structural lens: compile reusable context into SLO-aware state actions.</h2>
+<div class="takeaway">The cross-layer story is not a loose ecosystem map. It is a compilation path: application and model structure produce candidate KV objects; the controller validates and chooses actions; memory and transport substrates make those actions feasible or too expensive.</div>
+<div class="plotbox">
+<svg aria-label="Structural lens from reusable context to state actions" class="plot" role="img" viewbox="0 0 1100 520">
+<defs><marker id="arrow_struct" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0 0L10 5L0 10z" fill="#2563eb"></path></marker></defs>
+<text fill="#0b3558" font-size="18" font-weight="900" x="40" y="34">From reusable context to concrete state actions</text>
+<rect fill="#e8f2ff" height="120" rx="18" stroke="#aac8ef" width="220" x="40" y="80"></rect>
+<text fill="#0b3558" font-size="15" font-weight="900" text-anchor="middle" x="150" y="112">Application / agent</text>
+<text fill="#40566c" font-size="12" text-anchor="middle" x="150" y="140">stable segments</text><text fill="#40566c" font-size="12" text-anchor="middle" x="150" y="160">workflow graph</text><text fill="#40566c" font-size="12" text-anchor="middle" x="150" y="180">tenant and privacy labels</text>
+<rect fill="#eefdf8" height="120" rx="18" stroke="#9ed9c7" width="220" x="40" y="260"></rect>
+<text fill="#064e3b" font-size="15" font-weight="900" text-anchor="middle" x="150" y="292">Model state shape</text>
+<text fill="#40566c" font-size="12" text-anchor="middle" x="150" y="320">GQA / MLA / SWA</text><text fill="#40566c" font-size="12" text-anchor="middle" x="150" y="340">dtype and compression</text><text fill="#40566c" font-size="12" text-anchor="middle" x="150" y="360">position and compatibility</text>
+<rect fill="#0b3558" height="180" rx="22" width="270" x="355" y="135"></rect>
+<text fill="white" font-size="18" font-weight="900" text-anchor="middle" x="490" y="176">KV-aware controller</text>
+<text fill="#cde7ff" font-size="12" text-anchor="middle" x="490" y="205">lookup + compatibility + policy</text>
+<text fill="#cde7ff" font-size="12" text-anchor="middle" x="490" y="230">cache-affinity vs load balance</text>
+<text fill="#cde7ff" font-size="12" text-anchor="middle" x="490" y="255">SLO and tail-risk decision</text>
+<text fill="#cde7ff" font-size="12" text-anchor="middle" x="490" y="280">publish lifecycle events</text>
+<line marker-end="url(#arrow_struct)" stroke="#2563eb" stroke-width="3" x1="260" x2="355" y1="140" y2="190"></line>
+<line marker-end="url(#arrow_struct)" stroke="#2563eb" stroke-width="3" x1="260" x2="355" y1="320" y2="260"></line>
+<rect fill="#fff7ed" height="360" rx="22" stroke="#f6c78b" width="300" x="735" y="62"></rect>
+<text fill="#92400e" font-size="17" font-weight="900" text-anchor="middle" x="885" y="96">Action plan</text>
+<rect fill="white" height="34" rx="12" stroke="#f6c78b" width="220" x="775" y="125"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="885" y="147">route request to state</text>
+<rect fill="white" height="34" rx="12" stroke="#f6c78b" width="220" x="775" y="172"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="885" y="194">move state to request</text>
+<rect fill="white" height="34" rx="12" stroke="#f6c78b" width="220" x="775" y="219"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="885" y="241">prefill missing state</text>
+<rect fill="white" height="34" rx="12" stroke="#f6c78b" width="220" x="775" y="266"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="885" y="288">repair approximate state</text>
+<rect fill="white" height="34" rx="12" stroke="#f6c78b" width="220" x="775" y="313"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="885" y="335">demote, compress, evict</text>
+<rect fill="white" height="34" rx="12" stroke="#f6c78b" width="220" x="775" y="360"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="885" y="382">fallback recompute</text>
+<line marker-end="url(#arrow_struct)" stroke="#2563eb" stroke-width="3" x1="625" x2="735" y1="225" y2="225"></line>
+<rect fill="#f3e8ff" height="80" rx="18" stroke="#cfb3ff" width="250" x="365" y="390"></rect>
+<text fill="#581c87" font-size="15" font-weight="900" text-anchor="middle" x="490" y="422">Substrates constrain choices</text>
+<text fill="#40566c" font-size="12" text-anchor="middle" x="490" y="448">HBM, DRAM, CXL, SSD, RDMA, NIXL, NVMe-oF</text>
+<line marker-end="url(#arrow_struct)" stroke="#7c3aed" stroke-width="3" x1="615" x2="735" y1="430" y2="360"></line>
+</svg>
+</div><div class="caption">Figure 3. Structural lens: application-visible reusable context and model state shape are compiled into concrete state actions by a KV-aware controller; substrates constrain which action is actually cheap.</div>
+</section>
+<section id="journey">
+<h2>7. Request journey: every hit creates a materialization obligation.</h2>
+<div class="takeaway">Transport is not a postscript after scheduling. It constrains which cache-aware decision is good because a late, fragmented, CPU-bound, or unsafe hit can reduce goodput while increasing nominal hit rate.</div>
+<div class="flow">
+<div class="step"><b>1. Expose</b><span class="small">Application separates stable prompt, tool schema, workspace memory, dynamic tail, tenant policy, and reuse hints.</span></div>
+<div class="step"><b>2. Lookup</b><span class="small">Router hashes token blocks or chunks; metadata plane checks model, tokenizer, layout, RoPE, dtype, TTL, and owner.</span></div>
+<div class="step"><b>3. Decide</b><span class="small">Choose route, fetch, prefill, repair, demote, or recompute under SLO and queue state.</span></div>
+<div class="step"><b>4. Materialize</b><span class="small">Prepare memory descriptors, batch fragments, select tier/path, run async transfer, and report completion.</span></div>
+<div class="step"><b>5. Decode</b><span class="small">Live decode consumes resident KV and appends new KV; remote per-token fetch is usually unacceptable.</span></div>
+<div class="step"><b>6. Publish</b><span class="small">Admit, replicate, compress, evict, demote, or publish new metadata for future turns.</span></div>
+</div>
+<div class="caption">Figure 4. Request journey: a cache hit becomes useful only after lookup, compatibility checking, action selection, materialization, decode binding, and lifecycle publication.</div>
+<div class="grid2">
+<div class="good"><strong>Decode nuance.</strong> KV reuse mainly saves prefill. Decode benefits indirectly when reuse keeps prefill from competing with decode, places the request near needed state, reduces live working-set pressure, and avoids transferring large context into the token-by-token path. For long-output workloads, decode is a retention and bandwidth problem more than a classic prefix-hit problem.</div>
+<div class="warn"><strong>SLO tax.</strong> In this report, SLO tax means the extra lookup, queueing, descriptor setup, transfer, validation, retry, and tail-latency risk introduced by materializing reusable state.</div>
+</div>
+</section>
+<section id="quant">
+<h2>8. Quantitative case: larger pools raise hit rate; deeper tiers add movement tax.</h2>
+<div class="takeaway">A transport-centered reading needs two quantitative axes together: reachable KV capacity can improve hit rate for agentic traces, while movement across more tiers adds latency, control work, and tail risk.</div>
+<div class="grid3">
+<div class="card"><span class="evidence">reported</span><div class="metric">3.8 GB</div><div class="metric-sub">Approximate Kimi-2.5 FP8 KV footprint for a 100K-token context in the cited vLLM × Mooncake analysis. <a class="ref" href="https://vllm.ai/blog/2026-05-06-mooncake-store">S1</a></div></div>
+<div class="card"><span class="evidence">derived lower bound</span><div class="metric">76 ms</div><div class="metric-sub">Ideal transfer time for a 3.8 GB object over a 400 Gb/s link before protocol, queueing, registration, and fragmentation overheads.</div></div>
+<div class="card"><span class="evidence">illustrative</span><div class="metric">hit gain − movement tax</div><div class="metric-sub">The central trade-off: larger reachable pools raise hit opportunity, but deeper tiers can push materialization into the TTFT tail.</div></div>
+</div>
+<div class="warn"><strong>Quantitative disclaimer.</strong> Capacity-equivalent calculations use the Kimi-style 3.8 GB / 100K-token anchor only to create intuition. They are not a generic model-size law; different models, GQA/MLA choices, precision, compression, and block granularity change the object size.</div>
+<h3>8.1 Grounded sizing anchor: Kimi-style agentic serving</h3>
+<p>The vLLM × Mooncake analysis uses Kimi-2.5 on GB200 nodes and states that a 100K-token context can occupy about 3.8 GB for Kimi-2.5 FP8 KV caches. This is a useful anchor, but it is model-specific; it should not be generalized to all LLMs. <a class="ref" href="https://vllm.ai/blog/2026-05-06-mooncake-store">S1</a><a class="ref" href="https://recipes.vllm.ai/moonshotai/Kimi-K2.5">S16</a></p>
+<div class="formula">Kimi_style_KV_GB(context) ~= 3.8 GB * context_tokens / 100000
+
+20K tokens  -&gt; 0.76 GB KV
+80K tokens  -&gt; 3.04 GB KV    # representative late-turn trace size
+180K tokens -&gt; 6.84 GB KV    # long-context tail
+600K tokens -&gt; 22.8 GB KV    # stress point, not a trace average</div>
+<table>
+<thead><tr><th>Tier / resource view</th><th>Capacity anchor</th><th>100K-prefix equivalents</th><th>Serving interpretation</th></tr></thead>
+<tbody>
+<tr><td>Single GPU HBM</td><td>H200: 141 GB HBM3e; B300-class product pages advertise up to 288 GB HBM per GPU.</td><td>After weights and runtime reserve, only a fraction is available for persistent shared KV.</td><td>Best for live hot state; weak as an agentic shared pool. <a class="ref" href="https://www.nvidia.com/en-us/data-center/h200/">S13</a><a class="ref" href="https://www.supermicro.com/en/products/system/gpu/48u/srs-gb300-nvl72">S14</a></td></tr>
+<tr><td>Server DRAM</td><td>Beluga discusses 2 TB local DRAM per server as a representative RDMA-pool contribution.</td><td>2 TB / 3.8 GB ~= 526 100K-prefix equivalents.</td><td>Large warm tier, but copy path, PCIe, RDMA setup, and fragmentation can dominate TTFT. <a class="ref" href="https://arxiv.org/pdf/2511.20172">S8</a></td></tr>
+<tr><td>Rack-scale memory</td><td>GB300 NVL72 product pages list up to 21 TB HBM3e and 17 TB LPDDR5X per rack.</td><td>17 TB / 3.8 GB ~= 4473 100K-prefix equivalents before replication and fragmentation.</td><td>Large enough to make prefix reuse a fleet control-plane problem. <a class="ref" href="https://www.supermicro.com/en/products/system/gpu/48u/srs-gb300-nvl72">S14</a></td></tr>
+<tr><td>CXL / remote DRAM / SSD</td><td>Capacity can grow further through CXL pools and distributed KV stores.</td><td>Capacity rises; latency distribution also widens.</td><td>The metric becomes hit-rate gain minus restore tail, not capacity alone.</td></tr>
+</tbody>
+</table>
+<h3>8.2 Hit-rate side of the trade-off</h3>
+<div class="grid2">
+<div class="plotbox">
+<svg aria-label="Reachable KV pool size to hit rate" class="plot" role="img" viewbox="0 0 760 390">
+<text fill="#0b3558" font-size="16" font-weight="900" x="24" y="28">Reachable KV pool size -&gt; cache hit -&gt; prefill goodput</text>
+<text fill="#60758d" font-size="11" x="24" y="50">Denominator: request-level prefix hit in reported vLLM × Mooncake experiment; intermediate curve is illustrative.</text>
+<line stroke="#d8e5f7" x1="76" x2="676" y1="310" y2="310"></line>
+<line stroke="#edf2f9" x1="76" x2="676" y1="250" y2="250"></line>
+<line stroke="#edf2f9" x1="76" x2="676" y1="190" y2="190"></line>
+<line stroke="#edf2f9" x1="76" x2="676" y1="130" y2="130"></line>
+<line stroke="#edf2f9" x1="76" x2="676" y1="70" y2="70"></line>
+<text fill="#60758d" font-size="11" text-anchor="end" x="64" y="314">0%</text><text fill="#60758d" font-size="11" text-anchor="end" x="64" y="254">25%</text><text fill="#60758d" font-size="11" text-anchor="end" x="64" y="194">50%</text><text fill="#60758d" font-size="11" text-anchor="end" x="64" y="134">75%</text><text fill="#60758d" font-size="11" text-anchor="end" x="64" y="74">100%</text>
+<line stroke="#edf2f9" x1="76" x2="76" y1="310" y2="70"></line><text fill="#60758d" font-size="11" text-anchor="middle" x="76" y="334">1</text>
+<line stroke="#edf2f9" x1="307" x2="307" y1="310" y2="70"></line><text fill="#60758d" font-size="11" text-anchor="middle" x="307" y="334">10</text>
+<line stroke="#edf2f9" x1="537" x2="537" y1="310" y2="70"></line><text fill="#60758d" font-size="11" text-anchor="middle" x="537" y="334">100</text>
+<line stroke="#edf2f9" x1="676" x2="676" y1="310" y2="70"></line><text fill="#60758d" font-size="11" text-anchor="middle" x="676" y="334">400</text>
+<path d="M 76 306 L 284 250 L 515 142 L 633 89 L 665 82" fill="none" stroke="#0f766e" stroke-linecap="round" stroke-width="4"></path>
+<circle cx="76" cy="306" fill="#2563eb" r="6" stroke="white" stroke-width="2"></circle><text fill="#0b3558" font-size="11" font-weight="800" x="86" y="299">1.7%</text>
+<circle cx="633" cy="89" fill="#2563eb" r="6" stroke="white" stroke-width="2"></circle><text fill="#0b3558" font-size="11" font-weight="800" x="643" y="81">92.2%</text>
+<circle cx="665" cy="82" fill="#2563eb" r="6" stroke="white" stroke-width="2"></circle><text fill="#0b3558" font-size="11" font-weight="800" x="675" y="74">&gt;95%</text>
+<text fill="#60758d" font-size="12" text-anchor="middle" x="378" y="360">effective reachable 100K-prefix objects, log scale</text>
+</svg>
+<div class="caption">Figure 5. Hit-rate intuition: increasing the effective reachable KV pool can convert repeated agentic prefixes from mostly missed local state into reusable prefill savings.</div>
+</div>
+<div>
+<h4>Interpretation</h4>
+<p>On Codex-style agentic traces, a local/system-prompt-only cache can miss most of the reusable state. A distributed pool increases the reachable working set across turns and instances. This changes the denominator of prefill work: the system now often prefill-computes only the new delta instead of the entire accumulated context.</p>
+<p class="small">A simple prefill-only intuition: if 90% of a turn is reusable prefix, then hit rate h=1.7% leaves about 98.5% of prefill work, while h=92.2% leaves about 17.0%. That is roughly 5.8× theoretical prefill-work reduction before queueing, decode, and transfer overheads. The reported 3.8× throughput gain is therefore plausible and also shows that hit rate is not the final metric.</p>
+</div>
+</div>
+<h3>8.3 Movement side of the trade-off</h3>
+<div class="grid2">
+<div>
+<h4>Interpretation</h4>
+<p>The movement plot uses the same 3.8 GB 100K-token Kimi-style object. Bars are lower bounds from peak bandwidth division, not measured TTFT. Real systems add block lookup, transfer setup, registration, scatter-gather fragmentation, endpoint selection, retries, interference, and tail queuing.</p>
+<p class="small">This is why tier depth has to be coupled with policy. More storage can raise p_hit, but it also raises p_fetch and transfer_cost unless route-to-state, prefetch, batching, and direct paths keep the object out of the request's critical path.</p>
+</div>
+<div class="plotbox">
+<svg aria-label="Movement lower bound for one Kimi-style KV object" class="plot" role="img" viewbox="0 0 760 390">
+<text fill="#0b3558" font-size="16" font-weight="900" x="24" y="28">Movement lower bound for one 100K-token Kimi-style KV object</text>
+<text fill="#60758d" font-size="11" x="24" y="50">Lower bound = 3.8 GB / peak bandwidth. Real p95 can be much higher.</text>
+<line stroke="#d8e5f7" x1="84" x2="684" y1="310" y2="310"></line><text fill="#60758d" font-size="11" text-anchor="end" x="72" y="314">0 ms</text>
+<line stroke="#edf2f9" x1="84" x2="684" y1="270" y2="270"></line><text fill="#60758d" font-size="11" text-anchor="end" x="72" y="274">50</text>
+<line stroke="#edf2f9" x1="84" x2="684" y1="230" y2="230"></line><text fill="#60758d" font-size="11" text-anchor="end" x="72" y="234">100</text>
+<line stroke="#edf2f9" x1="84" x2="684" y1="150" y2="150"></line><text fill="#60758d" font-size="11" text-anchor="end" x="72" y="154">200</text>
+<line stroke="#edf2f9" x1="84" x2="684" y1="70" y2="70"></line><text fill="#60758d" font-size="11" text-anchor="end" x="72" y="74">300</text>
+<rect fill="#f97316" height="1" rx="6" width="72" x="112" y="309"></rect><text fill="#0b3558" font-size="11" font-weight="900" text-anchor="middle" x="148" y="298">0.8</text><text fill="#20384f" font-size="12" font-weight="850" text-anchor="middle" x="148" y="335">HBM</text>
+<rect fill="#f97316" height="2" rx="6" width="72" x="234" y="308"></rect><text fill="#0b3558" font-size="11" font-weight="900" text-anchor="middle" x="270" y="298">2.1</text><text fill="#20384f" font-size="12" font-weight="850" text-anchor="middle" x="270" y="335">NVLink</text>
+<rect fill="#f97316" height="47" rx="6" width="72" x="356" y="263"></rect><text fill="#0b3558" font-size="11" font-weight="900" text-anchor="middle" x="392" y="255">59</text><text fill="#20384f" font-size="12" font-weight="850" text-anchor="middle" x="392" y="335">PCIe5</text>
+<rect fill="#f97316" height="61" rx="6" width="72" x="478" y="249"></rect><text fill="#0b3558" font-size="11" font-weight="900" text-anchor="middle" x="514" y="241">76</text><text fill="#20384f" font-size="12" font-weight="850" text-anchor="middle" x="514" y="335">400G</text>
+<rect fill="#f97316" height="217" rx="6" width="72" x="600" y="93"></rect><text fill="#0b3558" font-size="11" font-weight="900" text-anchor="middle" x="636" y="85">271</text><text fill="#20384f" font-size="12" font-weight="850" text-anchor="middle" x="636" y="335">NVMe</text>
+<text fill="#60758d" font-size="11" text-anchor="middle" x="380" y="365">Illustrative lower bounds only; not measured end-to-end latency.</text>
+</svg>
+<div class="caption">Figure 6. Movement lower bounds: larger and deeper KV pools increase reuse opportunity, but the movement path can add enough latency and variance to erase the hit benefit.</div>
+</div>
+</div>
+</section>
+<section id="abi">
+<h2>9. KV object ABI: make state visible before making transport clever.</h2>
+<div class="takeaway">The transport layer cannot optimize anonymous tensor bytes. It needs a minimal KV object contract that exposes identity, compatibility, location, validity, policy, and completion semantics.</div>
+<table>
+<thead><tr><th>Field group</th><th>Representative fields</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td>Identity</td><td>object id, block hash, request/session/workflow id, producer engine id.</td><td>Names reusable state and lets metadata services avoid duplicate discovery.</td></tr>
+<tr><td>Model compatibility</td><td>model id, tokenizer id, architecture, layer/head layout, block size, RoPE/position offset.</td><td>Prevents invalid reuse across incompatible executions.</td></tr>
+<tr><td>Representation</td><td>dtype, quantization, compression, sparsity, chunk/page format, endian/alignment.</td><td>Determines whether the destination engine can bind the state directly or must decode/repair.</td></tr>
+<tr><td>Policy and governance</td><td>tenant, ACL, privacy label, TTL, provenance, confidence, quality-risk class.</td><td>Decides whether reuse is allowed, auditable, and reversible.</td></tr>
+<tr><td>Location and memory descriptor</td><td>tier, address, length, registration state, NIC affinity, CXL region, NVMe object, fault domain.</td><td>Lets the transport construct a real movement plan instead of a blind RPC.</td></tr>
+<tr><td>Lifecycle and telemetry</td><td>validity epoch, owner, refcount, hit count, last access, queue delay, p95 transfer time, fallback reason.</td><td>Feeds eviction, routing, admission, and postmortem debugging.</td></tr>
+</tbody>
+</table>
+<div class="grid3">
+<div class="card"><h3>Object identity</h3><p>KV needs names at block/chunk/session scope before it can be routed, fetched, or shared.</p></div>
+<div class="card"><h3>Memory descriptor</h3><p>HBM, DRAM, CXL, and NVMe are not interchangeable. The controller needs addressability, registration, permissions, and fault domains.</p></div>
+<div class="card"><h3>Transfer plan</h3><p>Layer/head/page fragments become batched scatter-gather plans with async completion and fallback semantics.</p></div>
+</div>
+</section>
+<section id="mooncake">
+<h2>10. Mooncake TE as a transfer-plan substrate.</h2>
+<div class="takeaway">Mooncake TE is best read as more than RDMA. RDMA is one backend; the higher-level contribution is registered segments, asynchronous batch transfers, topology-aware path selection, and a substrate that Mooncake Store or vLLM connectors can compose into KV materialization.</div>
+<div class="grid2">
+<div>
+<h3>What it adds above raw network transport</h3>
+<ul>
+<li><strong>Segments:</strong> named address spaces over RAM, VRAM, and NVMe-oF-like storage endpoints.</li>
+<li><strong>BatchTransfer:</strong> asynchronous read/write batches over non-contiguous regions.</li>
+<li><strong>Backend diversity:</strong> documented TCP, RDMA/GPUDirect RDMA, EFA, NVMe-oF, NVLink, and HIP paths.</li>
+<li><strong>Path management:</strong> NIC preference, multi-NIC pooling, slicing of larger transfers, endpoint pooling, retry and completion semantics.</li>
+</ul>
+<p class="small">The vLLM integration then uses the Mooncake master for KV-block metadata and client health, workers for background movement, and GPUDirect RDMA for SM-free, zero-copy KV transfer where applicable. <a class="ref" href="https://vllm.ai/blog/2026-05-06-mooncake-store">S1</a><a class="ref" href="https://kvcache-ai.github.io/Mooncake/design/transfer-engine/index.html">S2</a></p>
+</div>
+<div class="plotbox">
+<svg aria-label="Mooncake TE transfer plan substrate" class="plot" role="img" viewbox="0 0 880 520">
+<defs><marker id="arrow_te" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0 0L10 5L0 10z" fill="#2563eb"></path></marker></defs>
+<text fill="#0b3558" font-size="17" font-weight="900" x="30" y="34">Mooncake TE: from KV object to engine-ready pages</text>
+<rect fill="#e8f2ff" height="90" rx="18" stroke="#aac8ef" width="170" x="40" y="75"></rect><text fill="#0b3558" font-size="14" font-weight="900" text-anchor="middle" x="125" y="108">KV object</text><text fill="#40566c" font-size="11" text-anchor="middle" x="125" y="134">blocks, hashes, sizes</text>
+<rect fill="#eefdf8" height="90" rx="18" stroke="#9ed9c7" width="190" x="280" y="75"></rect><text fill="#064e3b" font-size="14" font-weight="900" text-anchor="middle" x="375" y="108">Segment registry</text><text fill="#40566c" font-size="11" text-anchor="middle" x="375" y="134">DRAM, VRAM, NVMe-oF</text>
+<rect fill="#fff7ed" height="90" rx="18" stroke="#f6c78b" width="220" x="540" y="75"></rect><text fill="#92400e" font-size="14" font-weight="900" text-anchor="middle" x="650" y="108">BatchTransfer</text><text fill="#40566c" font-size="11" text-anchor="middle" x="650" y="134">scatter-gather read/write</text>
+<line marker-end="url(#arrow_te)" stroke="#2563eb" stroke-width="3" x1="210" x2="280" y1="120" y2="120"></line><line marker-end="url(#arrow_te)" stroke="#2563eb" stroke-width="3" x1="470" x2="540" y1="120" y2="120"></line>
+<rect fill="white" height="70" rx="16" stroke="#dce8f6" width="160" x="80" y="250"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="160" y="282">Path selection</text><text fill="#60758d" font-size="10" text-anchor="middle" x="160" y="303">NIC, topology, backend</text>
+<rect fill="white" height="70" rx="16" stroke="#dce8f6" width="160" x="325" y="250"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="405" y="282">Async I/O</text><text fill="#60758d" font-size="10" text-anchor="middle" x="405" y="303">background workers</text>
+<rect fill="white" height="70" rx="16" stroke="#dce8f6" width="160" x="570" y="250"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="650" y="282">Completion</text><text fill="#60758d" font-size="10" text-anchor="middle" x="650" y="303">bind or fallback</text>
+<path d="M650 165 C660 210, 210 210, 160 250" fill="none" marker-end="url(#arrow_te)" stroke="#2563eb" stroke-width="3"></path>
+<line marker-end="url(#arrow_te)" stroke="#2563eb" stroke-width="3" x1="240" x2="325" y1="285" y2="285"></line><line marker-end="url(#arrow_te)" stroke="#2563eb" stroke-width="3" x1="485" x2="570" y1="285" y2="285"></line>
+<rect fill="#f3e8ff" height="72" rx="18" stroke="#cfb3ff" width="460" x="210" y="405"></rect><text fill="#581c87" font-size="14" font-weight="900" text-anchor="middle" x="440" y="435">Engine-ready KV pages</text><text fill="#40566c" font-size="11" text-anchor="middle" x="440" y="459">vLLM connector / PD connector / store connector can compose the result.</text>
+<line marker-end="url(#arrow_te)" stroke="#7c3aed" stroke-width="3" x1="650" x2="520" y1="320" y2="405"></line>
+</svg>
+</div><div class="caption">Figure 7. Mooncake TE separates KV object intent from concrete transfer execution: the useful abstraction is the transfer plan, not a single RDMA copy.</div>
+</div>
+<table>
+<thead><tr><th>Layer</th><th>What TE contributes</th><th>What still sits above TE</th></tr></thead>
+<tbody>
+<tr><td>Data path</td><td>Registered segments, batching, backend selection, async transfer.</td><td>Which KV should move, quality policy, and tenant-safe compatibility.</td></tr>
+<tr><td>Store integration</td><td>Moves KV between GPU HBM and distributed DRAM/SSD-like resources.</td><td>Master metadata, block hashes, admission, eviction, health, route policy.</td></tr>
+<tr><td>Operator value</td><td>Lowers p_fetch * transfer_cost and reduces CPU/GPU interference.</td><td>Control plane must keep requests from fetching cold or low-value state.</td></tr>
+</tbody>
+</table>
+
+<h3>Case-study lens</h3>
+<table class="two-col-table">
+<tbody>
+<tr><td>Problem</td><td>Make external KV state materializable across GPU, DRAM, SSD, and network paths without turning every cache hit into CPU-bound copy work.</td></tr>
+<tr><td>Boundary moved</td><td>Engine-local KV becomes a distributed KV service object that can support PD handoff and cross-request reuse.</td></tr>
+<tr><td>Data path</td><td>Registered segments, asynchronous batch transfer, endpoint selection, and GPUDirect RDMA where applicable.</td></tr>
+<tr><td>Control dependency</td><td>KV-block metadata, hash lookup, worker health, cache admission, eviction, and cache-aware routing above the transfer engine.</td></tr>
+<tr><td>Evidence</td><td>Production paper plus vLLM integration report; reported numbers are read under the stated Kimi/Codex/SWE-bench Pro conditions.</td></tr>
+<tr><td>Best fit</td><td>Cluster-level KV pooling, repeated or agentic prefixes, PD serving, and multi-tier KV materialization.</td></tr>
+<tr><td>Primary stress point</td><td>Tail latency under contention, metadata freshness, tenant policy, and whether transfer completion arrives before recomputation would have won.</td></tr>
+<tr><td>Not a claim</td><td>TE by itself does not define the full compatibility, governance, or quality policy for every reuse scenario.</td></tr>
+</tbody>
+</table>
+</section>
+<section id="beluga">
+<h2>11. Beluga: CXL is the substrate; Beluga-KVCache is the KV-aware layer.</h2>
+<div class="takeaway">Beluga is clearest when framed in two steps: it argues that RDMA-style movement is awkward for fragmented KV, and it adds KV-aware indexing/copy/control on top of generic CXL memory semantics. CXL pooling alone is not KV-block aware.</div>
+<div class="plotbox">
+<svg aria-label="Beluga RDMA to CXL to KV-aware CXL" class="plot" role="img" viewbox="0 0 1040 430">
+<defs><marker id="arrow_beluga" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0 0L10 5L0 10z" fill="#2563eb"></path></marker></defs>
+<text fill="#0b3558" font-size="17" font-weight="900" x="35" y="36">Beluga: memory semantics help, but KV awareness is added above CXL</text>
+<rect fill="#fff7ed" height="235" rx="18" stroke="#f6c78b" width="275" x="45" y="90"></rect>
+<text fill="#92400e" font-size="15" font-weight="900" text-anchor="middle" x="182" y="124">RDMA memory pool</text>
+<text fill="#40566c" font-size="12" text-anchor="middle" x="182" y="154">verbs, QPs, completion queues</text><text fill="#40566c" font-size="12" text-anchor="middle" x="182" y="178">fragmented sglist pressure</text><text fill="#40566c" font-size="12" text-anchor="middle" x="182" y="202">CPU or GPU polling overhead</text><text fill="#40566c" font-size="12" text-anchor="middle" x="182" y="226">scheduler still chases locality</text>
+<rect fill="#eef2ff" height="235" rx="18" stroke="#b9c5ff" width="275" x="380" y="90"></rect>
+<text fill="#3730a3" font-size="15" font-weight="900" text-anchor="middle" x="518" y="124">Generic CXL pool</text>
+<text fill="#40566c" font-size="12" text-anchor="middle" x="518" y="154">load/store address space</text><text fill="#40566c" font-size="12" text-anchor="middle" x="518" y="178">switch-attached memory</text><text fill="#40566c" font-size="12" text-anchor="middle" x="518" y="202">not KV-block aware</text><text fill="#40566c" font-size="12" text-anchor="middle" x="518" y="226">still needs index and layout logic</text>
+<rect fill="#eefdf8" height="235" rx="18" stroke="#9ed9c7" width="275" x="715" y="90"></rect>
+<text fill="#064e3b" font-size="15" font-weight="900" text-anchor="middle" x="852" y="124">Beluga-KVCache</text>
+<text fill="#40566c" font-size="12" text-anchor="middle" x="852" y="154">block hash -&gt; global address</text><text fill="#40566c" font-size="12" text-anchor="middle" x="852" y="178">gather-write / scatter-read kernels</text><text fill="#40566c" font-size="12" text-anchor="middle" x="852" y="202">CXL-based RPC via shared slots</text><text fill="#40566c" font-size="12" text-anchor="middle" x="852" y="226">scheduler simplification in design</text>
+<line marker-end="url(#arrow_beluga)" stroke="#2563eb" stroke-width="3" x1="320" x2="380" y1="208" y2="208"></line><line marker-end="url(#arrow_beluga)" stroke="#2563eb" stroke-width="3" x1="655" x2="715" y1="208" y2="208"></line>
+<text fill="#60758d" font-size="12" text-anchor="middle" x="520" y="370">The KV awareness is software above CXL, not an inherent property of a CXL switch.</text>
+</svg>
+</div><div class="caption">Figure 8. Beluga framing: CXL provides shared-memory semantics, while KV awareness is supplied by indexing, layout handling, copy kernels, and scheduling above the substrate.</div>
+<div class="grid2">
+<div>
+<h3>What Beluga adds on RDMA</h3>
+<p>Beluga argues that RDMA is a network protocol rather than a memory bus. CPU-driven paths can copy through bounce buffers, GPU-driven paths can require polling kernels and synchronization, and fragmented KV layouts can stress NIC scatter-gather limits. The paper gives a concrete Qwen-32B GQA example with 128 non-contiguous chunks per token, and sparser cases can create even more fragments. <a class="ref" href="https://arxiv.org/pdf/2511.20172">S8</a></p>
+</div>
+<div>
+<h3>What Beluga adds on CXL pooling</h3>
+<p>CXL switch-attached memory gives a shared memory semantic, but it does not know the model, tokenizer, RoPE position, block layout, or tenant policy of a KV object. Beluga-KVCache adds the KVCache index, data copy kernels, shared-memory RPC path, and scheduling simplification needed to make the CXL pool KV-aware.</p>
+</div>
+</div>
+<table>
+<thead><tr><th>Question</th><th>Beluga answer</th><th>Practical constraint</th></tr></thead>
+<tbody>
+<tr><td>Why memory semantics?</td><td>Load/store-like access can remove part of the verb/queue/completion overhead; the paper reports microbenchmark latency gains over an RDMA baseline.</td><td>CXL bandwidth, switch contention, coherence scope, adapter count, and GPU-to-CXL path maturity remain deployment constraints.</td></tr>
+<tr><td>Why not pure CXL pooling?</td><td>KV still needs block metadata, layout conversion, compatibility checks, and lifecycle policy.</td><td>The KV awareness is tailored software, not a native feature of the memory fabric.</td></tr>
+<tr><td>Why not replace all RDMA?</td><td>Beluga is strongest as nearby shared memory for low-latency KV access.</td><td>RDMA remains natural for wider cluster and cross-cluster movement.</td></tr>
+</tbody>
+</table>
+
+<h3>Case-study lens</h3>
+<table class="two-col-table">
+<tbody>
+<tr><td>Problem</td><td>RDMA-style movement is awkward when KV is large, fragmented, and frequently accessed across tiers.</td></tr>
+<tr><td>Boundary moved</td><td>Remote memory pool becomes a CXL memory-semantic pool with a KV-aware software layer.</td></tr>
+<tr><td>Data path</td><td>CXL-attached memory semantics plus KV index, gather/scatter-oriented access, copy kernels, and RPC/control paths.</td></tr>
+<tr><td>Control dependency</td><td>Placement, memory allocation, layout conversion, block indexing, and scheduler integration above raw CXL memory.</td></tr>
+<tr><td>Evidence</td><td>Preprint-level system proposal and evaluation; strong as an architectural direction, still dependent on CXL ecosystem maturity.</td></tr>
+<tr><td>Best fit</td><td>Nearby pod/rack memory expansion where low-latency shared memory semantics can beat explicit movement overhead.</td></tr>
+<tr><td>Primary stress point</td><td>CXL switch contention, GPU-to-CXL access path, coherence scope, deployment availability, and multi-tenant isolation.</td></tr>
+<tr><td>Not a claim</td><td>CXL pooling is not automatically KV-aware; Beluga adds KV semantics above the substrate.</td></tr>
+</tbody>
+</table>
+</section>
+<section id="dynamo">
+<h2>12. Dynamo / NIXL: focused direct handoff rather than a full KV lifecycle.</h2>
+<div class="takeaway">Dynamo's transport strength is production disaggregated serving with NIXL-based direct VRAM-to-VRAM KV transfer. It is strongest when KV is handed from prefill to decode inside a fast NVIDIA-oriented fabric.</div>
+<div class="plotbox">
+<svg aria-label="Dynamo NIXL direct KV handoff" class="plot" role="img" viewbox="0 0 1040 390">
+<defs><marker id="arrow_dyn" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0 0L10 5L0 10z" fill="#2563eb"></path></marker></defs>
+<text fill="#0b3558" font-size="17" font-weight="900" x="34" y="34">Dynamo / NIXL: orchestration around a direct prefill-to-decode KV handoff</text>
+<rect fill="#eef2ff" height="170" rx="18" stroke="#b9c5ff" width="240" x="40" y="92"></rect>
+<text fill="#3730a3" font-size="15" font-weight="900" text-anchor="middle" x="160" y="126">PrefillRouter</text><text fill="#40566c" font-size="12" text-anchor="middle" x="160" y="154">select prefill worker</text><text fill="#40566c" font-size="12" text-anchor="middle" x="160" y="176">cache-overlap + load score</text><text fill="#40566c" font-size="12" text-anchor="middle" x="160" y="198">inject transfer metadata</text>
+<rect fill="#e8f2ff" height="170" rx="18" stroke="#aac8ef" width="240" x="400" y="92"></rect>
+<text fill="#0b3558" font-size="15" font-weight="900" text-anchor="middle" x="520" y="126">Prefill worker</text><text fill="#40566c" font-size="12" text-anchor="middle" x="520" y="154">compute prompt</text><text fill="#40566c" font-size="12" text-anchor="middle" x="520" y="176">produce KV in VRAM</text><text fill="#40566c" font-size="12" text-anchor="middle" x="520" y="198">return backend metadata</text>
+<rect fill="#eefdf8" height="170" rx="18" stroke="#9ed9c7" width="240" x="760" y="92"></rect>
+<text fill="#064e3b" font-size="15" font-weight="900" text-anchor="middle" x="880" y="126">Decode worker</text><text fill="#40566c" font-size="12" text-anchor="middle" x="880" y="154">begin decode path</text><text fill="#40566c" font-size="12" text-anchor="middle" x="880" y="176">receive KV directly into VRAM</text><text fill="#40566c" font-size="12" text-anchor="middle" x="880" y="198">overlap transfer and work</text>
+<line marker-end="url(#arrow_dyn)" stroke="#2563eb" stroke-width="3" x1="280" x2="400" y1="160" y2="160"></line><text fill="#2563eb" font-size="11" text-anchor="middle" x="340" y="146">prefill request</text>
+<line marker-end="url(#arrow_dyn)" stroke="#2563eb" stroke-width="3" x1="640" x2="760" y1="160" y2="160"></line><text fill="#2563eb" font-size="11" text-anchor="middle" x="700" y="146">decode metadata</text>
+<path d="M520 262 C585 332, 800 332, 880 262" fill="none" marker-end="url(#arrow_dyn)" stroke="#f97316" stroke-width="4"></path>
+<text fill="#9a3412" font-size="12" font-weight="900" text-anchor="middle" x="700" y="350">NIXL: nonblocking VRAM-to-VRAM KV transfer over NVLink / IB / UCX-style paths</text>
+</svg>
+</div><div class="caption">Figure 9. Dynamo/NIXL framing: the core value is direct, coordinated prefill-to-decode KV handoff inside a production disaggregated serving path.</div>
+<p>The Dynamo documentation describes disaggregated execution as prefill computing KV, KV transfer to decode, and decode token generation. It states that NIXL transfers KV directly from prefill VRAM to decode VRAM and that the transfer is nonblocking. The router uses cache overlap and load, injects backend-specific transfer metadata, and coordinates transfer over fabric backends. <a class="ref" href="https://docs.dynamo.nvidia.com/dynamo/design-docs/disaggregated-serving">S7</a></p>
+<table>
+<thead><tr><th>Axis</th><th>Mooncake TE / Store</th><th>Dynamo / NIXL</th></tr></thead>
+<tbody>
+<tr><td>Primary positioning</td><td>KV-centric distributed store plus multi-substrate transfer substrate.</td><td>Production disaggregated serving stack with direct KV handoff.</td></tr>
+<tr><td>Best path</td><td>HBM/DRAM/NVMe-oF-like segments, RDMA/TCP/GDS-like movement, distributed pool.</td><td>Prefill VRAM to decode VRAM, nonblocking transfer inside fast GPU/network fabrics.</td></tr>
+<tr><td>Strength</td><td>Broader external KV lifecycle: cache pool, offload, cross-instance prefix reuse.</td><td>Tight orchestration and native alignment with NVIDIA GPU/fabric ecosystem.</td></tr>
+<tr><td>Potential gap</td><td>More policy and governance needed above transport.</td><td>Less obviously a general-purpose long-lived multi-tier KV store unless paired with other cache layers.</td></tr>
+</tbody>
+</table>
+
+<h3>Case-study lens</h3>
+<table class="two-col-table">
+<tbody>
+<tr><td>Problem</td><td>In PD serving, prefill-produced KV must reach decode quickly without blocking the critical path or consuming avoidable GPU compute.</td></tr>
+<tr><td>Boundary moved</td><td>Prefill/decode separation becomes a production direct-handoff path coordinated by the serving router.</td></tr>
+<tr><td>Data path</td><td>NIXL-based direct prefill-VRAM to decode-VRAM transfer with backend-specific metadata and nonblocking transfer semantics.</td></tr>
+<tr><td>Control dependency</td><td>Router cache-overlap scoring, load signals, transfer metadata injection, and decode worker coordination.</td></tr>
+<tr><td>Evidence</td><td>Vendor documentation and product architecture; useful as production signal, not an independent academic benchmark by itself.</td></tr>
+<tr><td>Best fit</td><td>NVIDIA-aligned disaggregated serving where the key boundary is fast prefill-to-decode handoff.</td></tr>
+<tr><td>Primary stress point</td><td>Scope of external cache lifecycle, multi-tier persistence, and portability outside the assumed fabric/software stack.</td></tr>
+<tr><td>Not a claim</td><td>NIXL direct handoff does not imply a complete long-lived distributed KV store unless paired with cache/storage layers.</td></tr>
+</tbody>
+</table>
+</section>
+<section id="prfaas">
+<h2>13. PrfaaS: cross-cluster prefill is a conditional boundary shift.</h2>
+<div class="takeaway">PrfaaS matters because it asks how far the PD boundary can move. The answer is not always outward: remote prefill wins only when model-side KV shrinkage, selective admission, bandwidth-aware routing, and tail-risk control line up.</div>
+<div class="wide-figure">
+<div class="plotbox">
+<svg aria-label="PrfaaS cross cluster prefill" class="plot" role="img" viewBox="0 0 1100 420">
+<defs><marker id="arrow_pr_v8" markerHeight="7" markerWidth="7" orient="auto" refX="9" refY="5" viewBox="0 0 10 10"><path d="M0 0L10 5L0 10z" fill="#2563eb"></path></marker></defs>
+<text fill="#0b3558" font-size="21" font-weight="900" x="32" y="36">PrfaaS: cross-cluster prefill after returned state becomes small enough</text>
+<text fill="#60758d" font-size="12" x="32" y="62">Remote prefill is an admission-controlled action, not a default replacement for local prefill.</text>
+<rect fill="#e8f2ff" height="150" rx="22" stroke="#aac8ef" width="250" x="70" y="115"></rect><text fill="#0b3558" font-size="16" font-weight="900" text-anchor="middle" x="195" y="152">Local PD cluster</text><text fill="#40566c" font-size="13" text-anchor="middle" x="195" y="184">decode + short prefills</text><text fill="#40566c" font-size="13" text-anchor="middle" x="195" y="208">local prefix cache</text><text fill="#40566c" font-size="13" text-anchor="middle" x="195" y="232">latency-sensitive SLO</text>
+<rect fill="#fff7ed" height="150" rx="22" stroke="#f6c78b" width="250" x="425" y="115"></rect><text fill="#92400e" font-size="16" font-weight="900" text-anchor="middle" x="550" y="152">Remote prefill</text><text fill="#40566c" font-size="13" text-anchor="middle" x="550" y="184">long uncached prompts</text><text fill="#40566c" font-size="13" text-anchor="middle" x="550" y="208">compute-rich site</text><text fill="#40566c" font-size="13" text-anchor="middle" x="550" y="232">bandwidth-aware admission</text>
+<rect fill="#eefdf8" height="150" rx="22" stroke="#9ed9c7" width="250" x="780" y="115"></rect><text fill="#064e3b" font-size="16" font-weight="900" text-anchor="middle" x="905" y="152">Returned KV / state</text><text fill="#40566c" font-size="13" text-anchor="middle" x="905" y="184">small enough for link</text><text fill="#40566c" font-size="13" text-anchor="middle" x="905" y="208">bounded transfer tail</text><text fill="#40566c" font-size="13" text-anchor="middle" x="905" y="232">decode continues locally</text>
+<path d="M320 185 C360 150, 385 150, 425 185" fill="none" marker-end="url(#arrow_pr_v8)" stroke="#2563eb" stroke-width="4"></path><text fill="#2563eb" font-size="12" font-weight="850" text-anchor="middle" x="372" y="140">selective offload</text>
+<path d="M675 190 C715 190, 740 190, 780 190" fill="none" marker-end="url(#arrow_pr_v8)" stroke="#2563eb" stroke-width="4"></path><text fill="#2563eb" font-size="12" font-weight="850" text-anchor="middle" x="728" y="174">KV return</text>
+<path d="M905 265 C760 365, 250 365, 195 265" fill="none" marker-end="url(#arrow_pr_v8)" stroke="#0f766e" stroke-width="4"></path><text fill="#0f766e" font-size="13" font-weight="850" text-anchor="middle" x="550" y="382">remote queueing + remote prefill + KV transfer must stay below saved local prefill time</text>
+</svg>
+<div class="caption">Figure 10. A larger PrfaaS diagram emphasizes the conditional nature of cross-cluster prefill: the returned state must be small enough and the end-to-end remote path must beat local prefill under tail-risk constraints.</div>
+</div>
+</div>
+<div class="support-grid">
+<div>
+<p>PrfaaS starts from a clear condition: conventional dense-attention PD is tied to a high-bandwidth domain because prefill emits too much KV. Hybrid or KV-efficient attention can shrink the returned state and make commodity-Ethernet or cross-cluster service plausible for selected long-context requests. <a class="ref" href="https://arxiv.org/pdf/2604.15039">S9</a></p>
+<table>
+<thead><tr><th>Condition</th><th>Why it matters</th><th>PrfaaS mechanism</th></tr></thead>
+<tbody>
+<tr><td>Long uncached prefill</td><td>Short requests do not save enough compute to pay cross-cluster transfer.</td><td>Length-based threshold routing.</td></tr>
+<tr><td>Small returned KV</td><td>Dense models can emit too much KV for commodity Ethernet.</td><td>KV-efficient hybrid attention and model-side reduction.</td></tr>
+<tr><td>Bandwidth-aware admission</td><td>Cross-cluster links fluctuate and can become the bottleneck.</td><td>Bandwidth-aware scheduling before congestion accumulates.</td></tr>
+<tr><td>Cache-aware placement</td><td>Uneven prefix caches can erase the benefit of remote prefill.</td><td>Global KV manager and hybrid prefix cache.</td></tr>
+</tbody>
+</table>
+</div>
+<div>
+<div class="formula">remote_prefill_is_worth_it when:
+
+saved_local_prefill_time
+  &gt; remote_queueing
+    + remote_prefill_time
+    + KV_transfer_time
+    + metadata_control_overhead
+    + tail_risk
+    + fallback_risk</div>
+<div class="warn small">Read the formula as an operator decision rule. PrfaaS is not claiming that remote prefill is universally better; it is a selective action that becomes credible when returned state is compact and the network path is controlled.</div>
+</div>
+</div>
+<h3>Case-study lens</h3>
+<table class="two-col-table">
+<tbody>
+<tr><td>Problem</td><td>Prefill demand is bursty and heterogeneous; local clusters may have decode pressure while remote capacity could absorb long prefills.</td></tr>
+<tr><td>Boundary moved</td><td>PD boundary expands from intra-cluster to cross-cluster or cross-site prefill service for selected requests.</td></tr>
+<tr><td>Data path</td><td>Remote prefill plus returned KV/state over less specialized links, conditional on model-side KV shrinkage and bandwidth feasibility.</td></tr>
+<tr><td>Control dependency</td><td>Length threshold, bandwidth-aware admission, global KV manager, cache placement, and tail-risk fallback.</td></tr>
+<tr><td>Evidence</td><td>Preprint-level deployment-architecture proposal; most convincing under selective long-context admission rather than universal offload.</td></tr>
+<tr><td>Best fit</td><td>Long uncached prompts, bursty prefill, heterogeneous clusters, and KV-efficient model architectures.</td></tr>
+<tr><td>Primary stress point</td><td>WAN/cross-cluster queueing, bandwidth variability, returned-state size, and recovery when remote path misses SLO.</td></tr>
+<tr><td>Not a claim</td><td>Remote prefill is not generally better; it is a conditional action selected only when the inequality closes.</td></tr>
+</tbody>
+</table>
+</section>
+<section id="compare">
+<h2>14. Comparative map: compare by boundary moved, not by one speedup number.</h2>
+<div class="takeaway">Mooncake TE, Beluga, Dynamo/NIXL, and PrfaaS answer different transport questions. A useful report compares their boundary, data-path contribution, control-plane dependency, best-fit workload, failure mode, and evidence type.</div>
+<table>
+<thead><tr><th>Work</th><th>Boundary moved</th><th>Data-path proposition</th><th>Control-plane dependency</th><th>Best-fit regime</th><th>Evidence type</th><th>Stress point / non-goal</th></tr></thead>
+<tbody>
+<tr><td>Mooncake TE / Store</td><td>Engine-local KV to distributed multi-tier KV service.</td><td>Segments plus BatchTransfer over heterogeneous memory/storage/network paths.</td><td>Metadata master, block hashes, health, admission, eviction, route policy.</td><td>Cluster KV pool, PD, agentic prefix reuse.</td><td>Paper + integration report.</td><td>Tail under contention; correctness and governance above the TE layer.</td></tr>
+<tr><td>Beluga</td><td>RDMA memory pool to CXL memory-semantic KV pool.</td><td>Load/store-like access plus KV index, gather/scatter kernels, CXL RPC.</td><td>Block index, layout conversion, CXL memory allocation, scheduler integration.</td><td>Nearby rack/pod memory expansion with low-latency KV access.</td><td>Preprint proposal.</td><td>CXL ecosystem maturity, switch contention, GPU-to-CXL path, coherence scope.</td></tr>
+<tr><td>Dynamo / NIXL</td><td>Prefill/decode handoff to production direct VRAM transfer.</td><td>Nonblocking prefill-VRAM to decode-VRAM transfer coordinated by router metadata.</td><td>PrefillRouter, cache-overlap/load scoring, transfer metadata injection.</td><td>NVIDIA GPU fabrics, production PD serving, fast handoff.</td><td>Product documentation.</td><td>Not a complete external cache lifecycle unless paired with KV store/tiering layers.</td></tr>
+<tr><td>PrfaaS</td><td>PD boundary to cross-cluster prefill service.</td><td>Selective long-context offload plus returned KV over less specialized links.</td><td>Bandwidth-aware admission, length threshold, global KV manager.</td><td>KV-efficient models with bursty long prefills.</td><td>Preprint architecture.</td><td>Tail risk, bandwidth variability, cache distribution, selective admission errors.</td></tr>
+</tbody>
+</table>
+</section>
+<section id="benchmark">
+<h2>15. Evaluation discipline and governance considerations</h2>
+<div class="takeaway">Every transport claim answers an operator question: does this mechanism improve SLO-qualified goodput after movement, control, quality, and governance costs?</div>
+<div class="grid2">
+<div>
+<h3>Evaluation dimensions</h3>
+<table>
+<tbody>
+<tr><td><strong>Boundary moved</strong></td><td>Local page, external store, PD handoff, CXL pool, cross-cluster service, or agent workflow.</td></tr>
+<tr><td><strong>Workload regime</strong></td><td>Agentic turn traces, RAG/document reuse, long-output decode, multi-tenant prefixes, or synthetic stress.</td></tr>
+<tr><td><strong>Hit denominator</strong></td><td>Request-level hit, block-level hit, byte-weighted hit, or prefill-compute-weighted hit.</td></tr>
+<tr><td><strong>Path metric</strong></td><td>Mean/p95 transfer time, queueing, CPU overhead, GPU interference, descriptor setup, retry rate.</td></tr>
+<tr><td><strong>End metric</strong></td><td>P50/P95 TTFT, TPOT stability, SLO goodput, cost per token, GPU utilization, quality retention.</td></tr>
+</tbody>
+</table>
+</div>
+<div>
+<h3>Governance checklist</h3>
+<table>
+<tbody>
+<tr><td><strong>Tenant isolation</strong></td><td>Object metadata must encode tenant, ACL, policy, and revocation behavior.</td></tr>
+<tr><td><strong>Compatibility safety</strong></td><td>Reject on model/tokenizer/RoPE/dtype/layout mismatch unless repair is explicitly validated.</td></tr>
+<tr><td><strong>Provenance</strong></td><td>Store producer, source context, validity epoch, quality confidence, and fallback path.</td></tr>
+<tr><td><strong>Staleness</strong></td><td>TTL, version, and context mutation invalidate or downgrade reuse confidence.</td></tr>
+<tr><td><strong>Auditability</strong></td><td>Each reused KV object leaves a trace: lookup, decision, transfer, bind, repair, fallback.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="guard"><strong>Threat model example.</strong> A KV object produced for one tenant or model version can be technically reachable but semantically unsafe. A transport layer that can move the object faster must still be gated by compatibility metadata, tenant policy, provenance, and a fallback path to recomputation.</div>
+</section>
+<section id="sources">
+<h2>Source trail and extended readings</h2>
+<div class="takeaway">Sources are grouped by role. Product pages, pricing pages, and hardware specifications are point-in-time signals and should be rechecked before quoting exact prices or product limits. Pricing sources in this file were checked on 2026-06-05.</div>
+<div class="grid2">
+<div>
+<h3>System papers and preprints</h3>
+<ol class="source-list">
+<li><strong>S3</strong> - <a href="https://www.usenix.org/system/files/fast25-qin.pdf">Mooncake FAST'25 paper</a></li>
+<li><strong>S8</strong> - <a href="https://arxiv.org/pdf/2511.20172">Beluga: CXL-Based Memory Architecture for LLM KVCache</a></li>
+<li><strong>S9</strong> - <a href="https://arxiv.org/pdf/2604.15039">Prefill-as-a-Service paper</a></li>
+<li><strong>S11</strong> - <a href="https://www.usenix.org/system/files/nsdi26-luo.pdf">Agentix NSDI'26 paper</a></li>
+<li><strong>S12</strong> - <a href="https://www.usenix.org/system/files/nsdi26-liu-yuhan.pdf">DroidSpeak NSDI'26 paper</a></li>
+<li><strong>S10</strong> - <a href="https://dblp.org/db/conf/fast/fast2026.html">FAST 2026 proceedings index</a></li>
+</ol>
+</div>
+<div>
+<h3>Project and product documentation</h3>
+<ol class="source-list">
+<li><strong>S1</strong> - <a href="https://vllm.ai/blog/2026-05-06-mooncake-store">vLLM × Mooncake Store blog, 2026</a></li>
+<li><strong>S2</strong> - <a href="https://kvcache-ai.github.io/Mooncake/design/transfer-engine/index.html">Mooncake Transfer Engine design docs</a></li>
+<li><strong>S7</strong> - <a href="https://docs.dynamo.nvidia.com/dynamo/design-docs/disaggregated-serving">NVIDIA Dynamo disaggregated serving docs</a></li>
+<li><strong>S16</strong> - <a href="https://recipes.vllm.ai/moonshotai/Kimi-K2.5">vLLM Kimi-K2.5 recipe</a></li>
+</ol>
+<h3>Pricing and hardware signals</h3><p class="small">DeepSeek V4 Flash/Pro pricing was checked against the official Models &amp; Pricing page for this report. Prices remain point-in-time signals.</p>
+<ol class="source-list">
+<li><strong>S4</strong> - <a href="https://openai.com/api/pricing/">OpenAI API pricing</a></li>
+<li><strong>S5</strong> - <a href="https://api-docs.deepseek.com/quick_start/pricing">DeepSeek API Models &amp; Pricing</a></li>
+<li><strong>S6</strong> - <a href="https://api-docs.deepseek.com/guides/kv_cache/">DeepSeek Context Caching guide</a></li>
+<li><strong>S13</strong> - <a href="https://www.nvidia.com/en-us/data-center/h200/">NVIDIA H200 product page</a></li>
+<li><strong>S14</strong> - <a href="https://www.supermicro.com/en/products/system/gpu/48u/srs-gb300-nvl72">Supermicro GB300 NVL72 rack specifications</a></li>
+<li><strong>S15</strong> - <a href="https://www.nvidia.com/content/dam/en-zz/Solutions/networking/ethernet-adapters/connectx-7-datasheet-Final.pdf">NVIDIA ConnectX-7 datasheet</a></li>
+</ol>
+</div>
+</div>
+</section>
+</div>
+</body>
+</html>

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>KV Cache 复用：传输与控制视角</title>
+<style>
+:root{--ink:#102033;--muted:#53697f;--soft:#f5f8fc;--line:#d8e5f7;--blue:#2563eb;--navy:#0b3558;--teal:#0f766e;--orange:#f97316;--purple:#7c3aed;--red:#b42318;--green:#067647;--card:#fbfdff;}
+*{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;font-family:"Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;color:var(--ink);background:var(--soft);line-height:1.62;} a{color:#0b63ce;text-decoration:none} a:hover{text-decoration:underline}.report{max-width:1220px;margin:0 auto;padding:34px 24px 76px}.hero{background:linear-gradient(135deg,#07172b 0%,#0b3558 58%,#0f766e 100%);color:white;border-radius:28px;padding:44px 50px;box-shadow:0 24px 60px rgba(10,40,80,.28)}.kicker{text-transform:uppercase;letter-spacing:.08em;font-size:12px;font-weight:850;color:#9bd4ff}.hero h1{font-size:48px;line-height:1.08;letter-spacing:-.04em;margin:8px 0 14px;max-width:1100px}.subtitle{font-size:19px;color:rgba(255,255,255,.88);max-width:1010px;margin:0}.meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.23);color:#eaf6ff;background:rgba(255,255,255,.10);border-radius:999px;padding:8px 12px;font-size:12px;font-weight:750}nav.toc{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:22px 0}nav.toc a{background:white;border:1px solid var(--line);border-radius:14px;padding:11px 13px;font-size:12.5px;font-weight:800;color:var(--navy);box-shadow:0 8px 24px rgba(20,60,100,.06)}.ref{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;margin:0 2px;border-radius:999px;background:#e6f1ff;color:#0b63ce;font-size:11px;font-weight:900;vertical-align:super}section{background:white;border:1px solid var(--line);border-radius:26px;margin:22px 0;padding:30px 34px;box-shadow:0 18px 50px rgba(16,40,70,.07);scroll-margin-top:20px}h2{margin:0 0 8px;font-size:30px;line-height:1.18;letter-spacing:-.02em;color:#092a49}h3{margin:18px 0 8px;font-size:19px;color:#0b3558}h4{margin:14px 0 6px;color:#244763}p{margin:10px 0}ul,ol{margin:8px 0 8px 24px;padding:0}li{margin:5px 0}.takeaway{border-left:5px solid var(--blue);background:#eef6ff;padding:12px 14px;border-radius:0 14px 14px 0;font-size:16px;color:#20384f;margin:12px 0 18px}.warn{border-left:5px solid var(--orange);background:#fff7ed;padding:12px 14px;border-radius:0 14px 14px 0;color:#5c3b10}.guard{border-left:5px solid var(--red);background:#fff1f0;padding:12px 14px;border-radius:0 14px 14px 0;color:#681f1a}.good{border-left:5px solid var(--green);background:#ecfdf3;padding:12px 14px;border-radius:0 14px 14px 0;color:#184e35}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start}.card{background:var(--card);border:1px solid #dce8f6;border-radius:18px;padding:16px 18px}.card h3,.card h4{margin-top:0}.small{font-size:13px;color:var(--muted)}.micro{font-size:11.5px;color:var(--muted);line-height:1.45}.metric{font-size:29px;font-weight:900;color:#0b3558;letter-spacing:-.025em;line-height:1.08}.metric-sub{font-size:12px;color:var(--muted);margin-top:4px}.badge{display:inline-block;border-radius:999px;background:#e8f2ff;color:#0b3558;padding:4px 9px;margin:2px 4px 2px 0;font-size:12px;font-weight:800}.badge.orange{background:#fff0df;color:#9a3412}.badge.green{background:#e5f8f2;color:#065f46}.badge.purple{background:#f0e7ff;color:#5b21b6}.badge.red{background:#fff1f0;color:#b42318}.plotbox{border:1px solid #dce8f6;border-radius:20px;padding:12px;background:#fbfdff;overflow:hidden}.plot{width:100%;height:auto;display:block}.caption{font-size:12px;color:#5d7084;margin-top:8px}.formula{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#0d2139;color:#eaf6ff;padding:14px 16px;border-radius:16px;overflow:auto;font-size:13px;line-height:1.55;white-space:pre}.flow{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:18px 0}.flow .step{background:#fbfdff;border:1px solid #dce8f6;border-radius:16px;padding:14px;min-height:126px}.flow .step b{display:block;color:#0b3558;margin-bottom:7px}table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}th,td{border-bottom:1px solid #e4edf8;padding:10px 9px;vertical-align:top;text-align:left}th{background:#f1f6fd;color:#0b3558;font-weight:850}tbody tr:hover td{background:#fbfdff}.source-list li{margin:8px 0}.evidence{font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.04em;color:#49657f;display:block;margin-bottom:6px}.two-col-table td:first-child{width:22%;font-weight:800;color:#0b3558}.wide{grid-column:1 / -1}.svgtext{font-family:"Noto Sans CJK SC",Arial,sans-serif}.fig-title{font-weight:900;fill:#0b3558}.fig-muted{fill:#53697f}.fig-box{fill:#fbfdff;stroke:#dce8f6;stroke-width:1.3}.fig-blue{fill:#e8f2ff;stroke:#9fc3ff}.fig-green{fill:#e5f8f2;stroke:#8dd8bd}.fig-orange{fill:#fff0df;stroke:#ffc68a}.fig-purple{fill:#f0e7ff;stroke:#c7a9ff}.fig-red{fill:#fff1f0;stroke:#ffc2bd}@media(max-width:980px){.grid2,.grid3,.grid4,nav.toc,.flow{grid-template-columns:1fr}.hero h1{font-size:34px}.hero{padding:34px 26px}section{padding:22px}.flow .step{min-height:auto}}@media print{body{background:white}.report{max-width:none;padding:0}.hero,section{box-shadow:none;border-radius:0;break-inside:auto;page-break-inside:auto}nav.toc{display:none}table,.plotbox,.card,.takeaway,.warn,.guard,.good{break-inside:avoid;page-break-inside:avoid}h2,h3{break-after:avoid;page-break-after:avoid}a{color:#0b3558;text-decoration:none}@page{size:A4;margin:12mm}}
+</style>
+</head>
+<body>
+<div class="report">
+<header class="hero">
+<div class="kicker">KV Cache 复用 · 传输与控制技术报告</div>
+<h1>KV 复用能不能省钱，取决于节省下来的 Prefill 能不能穿过放置、传输与控制这三道关。</h1>
+<p class="subtitle">这份报告把 KV cache 复用看作一个传输与控制问题来写。关键不在于"命没命中缓存"，而在于兼容的状态能不能被找到、管住、路由、搬到位——并且在重算更划算之前塞进推理引擎。</p>
+<div class="meta"><span class="pill">范围：agentic serving、分布式 KV 存储、传输底座、CXL、NIXL、PrfaaS</span><span class="pill">证据：论文、官方文档、定价信号、推导下界、定性图示</span><span class="pill">语言：简体中文版本</span></div>
+</header>
+<nav class="toc">
+<a href="#abstract">0. 摘要</a><a href="#method">1. 范围与方法</a><a href="#ledger">2. 证据账本</a><a href="#signals">3. 系统化信号</a><a href="#economics">4. 经济动机</a>
+<a href="#decision">5. 决策模型</a><a href="#structure">6. 结构视角</a><a href="#journey">7. 请求路径</a><a href="#quant">8. 定量直觉</a><a href="#abi">9. KV 对象 ABI</a>
+<a href="#mooncake">10. Mooncake TE</a><a href="#beluga">11. Beluga</a><a href="#dynamo">12. Dynamo/NIXL</a><a href="#prfaas">13. PrfaaS</a><a href="#compare">14. 对比图谱</a><a href="#benchmark">15. 评估治理</a><a href="#sources">Sources</a>
+</nav>
+<section id="abstract">
+<h2>0. 摘要</h2>
+<div class="takeaway">命中率只是中间变量。真正该看的指标是：满足 SLO 的 goodput、P50/P95 TTFT、TPOT 稳定性、GPU 空转、单位有效 token 成本，以及跨请求复用的安全性。</div>
+<div class="grid2">
+<div>
+<p>KV 复用远不止"缓存命中"这么简单。它本质上把本来在 prefill 阶段烧掉的计算，转化成了一个状态传输与控制问题：这段状态兼不兼容、现在在哪儿、要多久才能变成推理引擎能直接绑定的 KV page/block，以及负载一上来是不是干脆放弃复用、直接重算更划算。</p>
+<p>所以这份报告的焦点放在 <strong>传输层</strong>：外部 KV store、多层级物化、直接内存通路、CXL 类内存池、prefill/decode 解耦后的 KV 交接，以及决定这些状态操作是否划算的路由与元数据控制面。</p>
+<div class="formula">reuse_value ~= p_hit * prefill_compute_saved
+              - storage_cost
+              - p_fetch * transfer_cost
+              - lookup_and_control_cost
+              - repair_or_fallback_cost
+              - tail_latency_risk
+              - quality_and_governance_risk</div>
+</div>
+<div class="grid3">
+<div class="card"><span class="evidence">reported</span><div class="metric">3.8x</div><div class="metric-sub">vLLM × Mooncake Store 在真实 Codex/SWE-bench Pro agentic trace 上取得的吞吐提升。</div></div>
+<div class="card"><span class="evidence">reported</span><div class="metric">46x</div><div class="metric-sub">同一实验中 P50 TTFT 的改善幅度。</div></div>
+<div class="card"><span class="evidence">reported</span><div class="metric">1.7% -&gt; 92.2%</div><div class="metric-sub">命中率从本地缓存量级跃迁到分布式 KV 池量级，传输通路随之从次要矛盾升级为首要矛盾。</div></div>
+</div>
+</div>
+<div class="warn"><strong>证据口径。</strong> 本文所有数字要么标明了出处，要么来自明确假设下的简单推导，要么明确标为定性图示。图中的曲线和移动下界是为了帮读者建立系统 trade-off 的直觉，不应被当作端到端 benchmark 结果。</div>
+<p class="small">vLLM × Mooncake Store 报告将系统收益归因于分布式 KV 池在提升命中率的同时保持传输效率；该报告还给出了 12 到 60 GPU 扩展测试中 &gt;95% hit rate 的结果。<a class="ref" href="https://vllm.ai/blog/2026-05-06-mooncake-store">S1</a></p>
+</section>
+<section id="method">
+<h2>1. 数据范围与方法</h2>
+<div class="takeaway">这是一份以传输为中心的技术报告，不是完整学术综述。纳入标准很明确：某项工作是否改变了 KV 状态跨服务、跨内存层级、跨主机、跨机架或跨集群边界时的放置、移动、物化、路由或治理方式。</div>
+<div class="grid2">
+<div>
+<h3>范围边界</h3>
+<table class="two-col-table"><tbody>
+<tr><td>纳入</td><td>外部 KV store、prefill/decode 交接、分布式 KV 传输、CXL/远端内存池、direct GPU path、KV-aware 路由、元数据/ABI 需求，以及传输可见的治理约束。</td></tr>
+<tr><td>仅作背景</td><td>本地 engine layout、prefix caching、压缩/保留、agent workflow 复用、跨模型复用；只有当它们改变了传输需求或兼容性要求时才展开。</td></tr>
+<tr><td>不覆盖</td><td>所有 KV compression、eviction、semantic cache、Transformer 效率、MoE、编译器或 agent 框架工作的完整分类。</td></tr>
+</tbody></table>
+</div>
+<div>
+<h3>证据处理</h3>
+<table class="two-col-table"><tbody>
+<tr><td>Reported</td><td>直接来自论文、产品文档或项目博客的数字；尽量保留原 workload 和假设。</td></tr>
+<tr><td>Derived</td><td>由明示量推导出的简单计算，如 KV 对象大小除以峰值带宽；除非另有说明，均为理想下界。</td></tr>
+<tr><td>Sourced inference</td><td>有来源文本支撑的架构解读，但通常不是来源中的某一句原话。</td></tr>
+<tr><td>Illustrative</td><td>帮助解释 trade-off 的定性曲线或图示，不能替代实测。</td></tr>
+</tbody></table>
+</div>
+</div>
+<div class="good"><strong>阅读规则。</strong> 比较不同系统时，应先看它挪动了哪条边界、优化了哪个指标。direct handoff、CXL memory pool、cross-cluster prefill service 不是彼此的替代品，而是 transport/control 设计空间中的不同坐标。</div>
+</section>
+<section id="ledger">
+<h2>2. Claim 与证据账本</h2>
+<div class="takeaway">主要论断需要可审计：每条 claim 都标明证据类型、来源线索，以及应该在什么条件下解读。</div>
+<table>
+<thead><tr><th>本文使用的 claim</th><th>证据类型</th><th>条件与限制</th><th>来源</th></tr></thead>
+<tbody>
+<tr><td>KV 复用应拿 SLO-qualified goodput、TTFT/TPOT 稳定性和集群利用率来评判，而不是光看命中率。</td><td>Sourced inference</td><td>出自 serving 系统论文和产品系统的共同趋势：复用必须经受排队、传输和调度的考验。</td><td>S1, S3, S7, S9</td></tr>
+<tr><td>分布式 KV pooling 可以显著提高 agentic trace 的命中率，同时把传输推上一等瓶颈的位置。</td><td>Reported</td><td>vLLM × Mooncake Store 在其给定 workload 下报告了 1.7%→92.2% 的命中率跃迁、3.8x 吞吐和 46x P50 TTFT 改善。</td><td>S1</td></tr>
+<tr><td>100K-token Kimi-style FP8 KV 对象大到足以让移动成本主导请求路径。</td><td>Reported + derived</td><td>3.8 GB 只是特定模型和表示的锚点；容量等价计算继承这一假设。</td><td>S1, S16</td></tr>
+<tr><td>公开的 cached-input 折扣是复用经济价值的强信号，但不能当作某种内部 KV 实现的证据。</td><td>Reported pricing + interpretation</td><td>OpenAI 和 DeepSeek 的定价说明产品层面奖励了可复用的输入状态，但并未暴露 provider 的内部实现。精确价格是时间点信号。</td><td>S4, S5, S6</td></tr>
+<tr><td>Mooncake TE 更适合读作 transfer-plan substrate 加上 store/metadata control，而不是简单的 RDMA wrapper。</td><td>Sourced inference</td><td>收益来自 segment abstraction、BatchTransfer、endpoint/path selection 和 metadata orchestration 的组合。</td><td>S2, S3</td></tr>
+<tr><td>CXL pooling 并不会天然理解 KV；Beluga 在内存底座之上加入了 KV index、layout conversion 和 access orchestration。</td><td>Sourced inference</td><td>原始的 load/store 内存不知道 model、block、RoPE、dtype、tenant 或 tier 语义。</td><td>S8</td></tr>
+<tr><td>Dynamo/NIXL 的强项是在 NVIDIA-oriented serving stack 中实现 prefill-to-decode direct transfer。</td><td>Reported + interpretation</td><td>本文把它视作聚焦的 direct handoff，而不是完整的长寿命多层 KV 生命周期管理。</td><td>S7</td></tr>
+<tr><td>PrfaaS 只有在远端 prefill 节省的时间超过排队、回传 KV、元数据和尾部风险成本时才成立。</td><td>Sourced inference</td><td>边界外移依赖 selective admission、bandwidth awareness 和模型侧 KV footprint reduction。</td><td>S9</td></tr>
+</tbody>
+</table>
+</section>
+<section id="signals">
+<h2>3. 为什么 KV reuse 变成了系统问题</h2>
+<div class="takeaway">KV-cache 的工作重心已经从本地内存布局扩展到面向传输的系统问题：可复用状态开始跨越服务、层级、主机、机架，甚至模型和 workflow 的边界。下图是范围内语料的信号图，不是 bibliometric claim。</div>
+<div class="plotbox">
+<svg class="plot svgtext" role="img" viewbox="0 0 1020 410"><rect fill="#fbfdff" height="410" rx="16" width="1020" x="0" y="0"></rect><text fill="#0b3558" font-size="20" font-weight="900" x="24" y="34">图 1. KV cache 从局部优化走向 serving 基础设施</text><text fill="#53697f" font-size="13" x="24" y="58">指示性下界：重点是 2025-2026 年后分支扩展到 memory、transport、routing 和 workflow。</text><line stroke="#d8e5f7" x1="80" x2="960" y1="330" y2="330"></line><line stroke="#d8e5f7" x1="80" x2="80" y1="80" y2="330"></line><g fill="#53697f" font-size="12"><text x="52" y="334">0</text><text x="46" y="270">10</text><text x="46" y="210">20</text><text x="46" y="150">30</text></g><g><rect fill="#e8f2ff" height="45" rx="8" stroke="#9fc3ff" width="80" x="150" y="285"></rect><text fill="#0b3558" font-size="13" x="172" y="355">2023</text><text fill="#53697f" font-size="12" x="165" y="376">n&gt;=5</text></g><g><rect fill="#e5f8f2" height="60" rx="8" stroke="#8dd8bd" width="80" x="340" y="270"></rect><text fill="#0b3558" font-size="13" x="362" y="355">2024</text><text fill="#53697f" font-size="12" x="355" y="376">n&gt;=8</text></g><g><rect fill="#fff0df" height="142" rx="8" stroke="#ffc68a" width="80" x="530" y="188"></rect><text fill="#0b3558" font-size="13" x="552" y="355">2025</text><text fill="#53697f" font-size="12" x="545" y="376">n&gt;=18</text></g><g><rect fill="#f0e7ff" height="210" rx="8" stroke="#c7a9ff" width="80" x="720" y="120"></rect><text fill="#0b3558" font-size="13" x="742" y="355">2026</text><text fill="#53697f" font-size="12" x="735" y="376">n&gt;=29</text></g><g font-size="12"><rect fill="#e8f2ff" height="14" stroke="#9fc3ff" width="14" x="835" y="110"></rect><text fill="#53697f" x="855" y="122">layout / prefix</text><rect fill="#e5f8f2" height="14" stroke="#8dd8bd" width="14" x="835" y="136"></rect><text fill="#53697f" x="855" y="148">PD boundary</text><rect fill="#fff0df" height="14" stroke="#ffc68a" width="14" x="835" y="162"></rect><text fill="#53697f" x="855" y="174">platform / store</text><rect fill="#f0e7ff" height="14" stroke="#c7a9ff" width="14" x="835" y="188"></rect><text fill="#53697f" x="855" y="200">routing / CXL / agents</text></g></svg>
+<div class="caption">图 1. 2024 年之后，KV 不再只是本地显存管理；它进入了 store、direct path、routing policy、CXL-like memory 和 agentic workflow 的视野。</div>
+</div>
+<div class="grid3">
+<div class="card"><h3>本地底座</h3><p>Paged KV、radix cache、prefix cache。KV 对象仍主要留在 engine 内部。</p></div>
+<div class="card"><h3>状态服务</h3><p>外部 KV pool、分布式 metadata、hot/warm/cold tier，让复用成为一种服务。</p></div>
+<div class="card"><h3>传输底座</h3><p>RDMA、GPUDirect、NIXL、NVMe-oF、CXL-like semantics 决定物化的真实成本。</p></div>
+</div>
+</section>
+<section id="economics">
+<h2>4. 经济动机：cache-friendly 行为已经在定价中体现</h2>
+<div class="takeaway">公开的 cached-input 折扣证明了复用的经济价值：服务商愿意给可复用输入状态定一个更低的价格。但它本身不能证明内部一定暴露了 raw KV、跨节点传输了 KV，或采用了某个具体 memory tier。</div><div class="wide-figure"><div class="plotbox">
+<svg aria-label="Official cached-input pricing ratio" class="plot" role="img" viewbox="0 0 1100 370">
+<text fill="#0b3558" font-size="20" font-weight="900" x="32" y="34">Input cache-miss 价格 / input cache-hit 价格</text>
+<text fill="#60758d" font-size="12" x="32" y="60">时间点官方定价。仅作为经济信号，不构成实现层面的结论。</text>
+<line stroke="#d8e5f7" x1="265" x2="965" y1="95" y2="95"></line>
+<line stroke="#d8e5f7" x1="265" x2="965" y1="170" y2="170"></line>
+<line stroke="#d8e5f7" x1="265" x2="965" y1="245" y2="245"></line>
+<text fill="#20384f" font-size="15" font-weight="850" x="32" y="103">OpenAI GPT-5.5</text>
+<rect fill="#e7f1ff" height="34" rx="12" width="680" x="265" y="76"></rect><rect fill="#2563eb" height="34" rx="12" width="57" x="265" y="76"></rect><text fill="#0b3558" font-size="14" font-weight="900" x="335" y="98">10.0×</text><text fill="#60758d" font-size="12" x="265" y="126">$5.00 miss vs $0.50 hit / 1M input tokens</text>
+<text fill="#20384f" font-size="15" font-weight="850" x="32" y="178">DeepSeek V4 Flash</text>
+<rect fill="#e7f1ff" height="34" rx="12" width="680" x="265" y="151"></rect><rect fill="#2563eb" height="34" rx="12" width="283" x="265" y="151"></rect><text fill="white" font-size="14" font-weight="900" text-anchor="end" x="536" y="173">50.0×</text><text fill="#60758d" font-size="12" x="265" y="201">$0.14 miss vs $0.0028 hit / 1M input tokens; output $0.28 / 1M</text>
+<text fill="#20384f" font-size="15" font-weight="850" x="32" y="253">DeepSeek V4 Pro</text>
+<rect fill="#e7f1ff" height="34" rx="12" width="680" x="265" y="226"></rect><rect fill="#2563eb" height="34" rx="12" width="680" x="265" y="226"></rect><text fill="white" font-size="14" font-weight="900" text-anchor="end" x="930" y="248">120.0×</text><text fill="#60758d" font-size="12" x="265" y="276">$0.435 miss vs $0.003625 hit / 1M input tokens; output $0.87 / 1M</text>
+<text fill="#60758d" font-size="12" x="32" y="326">DeepSeek 价格来自官方 Models &amp; Pricing 页面；价格单位为每 1M tokens，可能变动。</text>
+<text fill="#60758d" font-size="12" x="32" y="346">本图用作 operator-economics 层面的动机说明，不是对 KV API 或后端设计的证明。</text>
+</svg>
+<div class="caption">图 2. 全宽定价图让 cached-input 的经济信号一目了然：它说明 provider 和 customer 为什么在意复用，但刻意不对内部 KV 实现做任何推断。</div>
+</div></div>
+<div class="grid2">
+<div>
+<p>定价信号对应用框架构成直接压力：稳定的 system prompt、tool schema、共享文档和 workspace memory，只要策略允许，就应该组织成可缓存的结构。但产品定价只是市场信号；讨论 serving 架构时，仍然需要用系统论文和产品文档来论证内部可能如何实现。</p>
+<div class="warn small">下表价格为本文写作时的时间点信号，引用前应重新核对官方页面。<a class="ref" href="https://openai.com/api/pricing/">S4</a><a class="ref" href="https://api-docs.deepseek.com/quick_start/pricing">S5</a></div>
+</div>
+<div>
+<table><thead><tr><th>Provider / model</th><th>Input hit</th><th>Input miss</th><th>Miss / hit</th></tr></thead><tbody>
+<tr><td>OpenAI GPT-5.5</td><td>$0.50 / 1M</td><td>$5.00 / 1M</td><td>10.0x</td></tr>
+<tr><td>DeepSeek V4 Flash</td><td>$0.0028 / 1M</td><td>$0.14 / 1M</td><td>50.0x</td></tr>
+<tr><td>DeepSeek V4 Pro</td><td>$0.003625 / 1M</td><td>$0.435 / 1M</td><td>120.0x</td></tr>
+</tbody></table>
+<p class="micro">输出价格在对应官方页面中另列；这里用 input miss/hit 比例作为 operator-economics 层面的动机说明，而非实现证据。</p>
+</div>
+</div>
+</section>
+<section id="decision">
+<h2>5. Operator 决策模型：路由、搬运、修补、压缩还是重算</h2>
+<div class="takeaway">KV 复用的核心不是最大化名义命中率，而是在 SLO、质量和治理约束下，选最便宜且安全的状态操作。</div>
+<table><thead><tr><th>场景</th><th>更可能合适的动作</th><th>传输/控制需求</th><th>常见失败模式</th></tr></thead><tbody>
+<tr><td>兼容的热 KV 已在轻载 worker 附近。</td><td><strong>把请求路由到状态所在处。</strong></td><td>新鲜的 location index、负载信号、tenant policy、cache-affinity scoring。</td><td>过度 affinity 造成热点，反而损害 SLO。</td></tr>
+<tr><td>KV 很大、兼容，且足够近，能在重算完成之前到达。</td><td><strong>把状态搬到请求这边。</strong></td><td>memory descriptor、batch transfer plan、后台 I/O、completion event。</td><td>传输尾延迟超过节省的 prefill 时间。</td></tr>
+<tr><td>KV 冷、碎片化或距离远，但未来复用概率高。</td><td><strong>Prefetch 或异步降级。</strong></td><td>workflow hint、TTL、tier score、queue-aware admission。</td><td>污染 warm tier，或搬运了不会再用的字节。</td></tr>
+<tr><td>命中只是近似或部分兼容。</td><td><strong>选择性修补。</strong></td><td>deviation score、重算边界、quality fallback、provenance。</td><td>质量漂移或隐藏的正确性损失。</td></tr>
+<tr><td>decode loop 已经进入逐 token 生成阶段。</td><td><strong>live state 留在本地，避免远端逐 token fetch。</strong></td><td>hot HBM allocation、retention/compression policy、decode admission。</td><td>远端读取进入 critical loop，TPOT 被打穿。</td></tr>
+<tr><td>tenant、model、tokenizer、RoPE、dtype 或 layout 不匹配。</td><td><strong>拒绝复用，走重算。</strong></td><td>compatibility ABI、validity epoch、policy gate、可审计 fallback。</td><td>不安全复用或数据泄漏。</td></tr>
+</tbody></table>
+</section>
+<section id="structure">
+<h2>6. 结构视角：把可复用上下文编译成 SLO-aware 状态操作</h2>
+<div class="takeaway">跨层故事不是一张松散的生态图，而是一条编译路径：应用和模型结构产生候选 KV 对象；控制器验证兼容性并选择动作；memory/transport 底座决定这些动作是否真的够便宜。</div>
+<div class="plotbox">
+<svg aria-label="Structural lens from reusable context to state actions" class="plot" role="img" viewbox="0 0 1100 520">
+<defs><marker id="arrow_struct" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0 0L10 5L0 10z" fill="#2563eb"></path></marker></defs>
+<text fill="#0b3558" font-size="18" font-weight="900" x="40" y="34">从可复用上下文到具体状态操作</text>
+<rect fill="#e8f2ff" height="120" rx="18" stroke="#aac8ef" width="220" x="40" y="80"></rect>
+<text fill="#0b3558" font-size="15" font-weight="900" text-anchor="middle" x="150" y="112">应用 / Agent</text>
+<text fill="#40566c" font-size="12" text-anchor="middle" x="150" y="140">stable segments</text><text fill="#40566c" font-size="12" text-anchor="middle" x="150" y="160">workflow graph</text><text fill="#40566c" font-size="12" text-anchor="middle" x="150" y="180">tenant and privacy labels</text>
+<rect fill="#eefdf8" height="120" rx="18" stroke="#9ed9c7" width="220" x="40" y="260"></rect>
+<text fill="#064e3b" font-size="15" font-weight="900" text-anchor="middle" x="150" y="292">模型状态形态</text>
+<text fill="#40566c" font-size="12" text-anchor="middle" x="150" y="320">GQA / MLA / SWA</text><text fill="#40566c" font-size="12" text-anchor="middle" x="150" y="340">dtype and compression</text><text fill="#40566c" font-size="12" text-anchor="middle" x="150" y="360">position and compatibility</text>
+<rect fill="#0b3558" height="180" rx="22" width="270" x="355" y="135"></rect>
+<text fill="white" font-size="18" font-weight="900" text-anchor="middle" x="490" y="176">KV-aware 控制器</text>
+<text fill="#cde7ff" font-size="12" text-anchor="middle" x="490" y="205">lookup + compatibility + policy</text>
+<text fill="#cde7ff" font-size="12" text-anchor="middle" x="490" y="230">cache-affinity vs load balance</text>
+<text fill="#cde7ff" font-size="12" text-anchor="middle" x="490" y="255">SLO and tail-risk decision</text>
+<text fill="#cde7ff" font-size="12" text-anchor="middle" x="490" y="280">publish lifecycle events</text>
+<line marker-end="url(#arrow_struct)" stroke="#2563eb" stroke-width="3" x1="260" x2="355" y1="140" y2="190"></line>
+<line marker-end="url(#arrow_struct)" stroke="#2563eb" stroke-width="3" x1="260" x2="355" y1="320" y2="260"></line>
+<rect fill="#fff7ed" height="360" rx="22" stroke="#f6c78b" width="300" x="735" y="62"></rect>
+<text fill="#92400e" font-size="17" font-weight="900" text-anchor="middle" x="885" y="96">Action plan</text>
+<rect fill="white" height="34" rx="12" stroke="#f6c78b" width="220" x="775" y="125"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="885" y="147">route request to state</text>
+<rect fill="white" height="34" rx="12" stroke="#f6c78b" width="220" x="775" y="172"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="885" y="194">move state to request</text>
+<rect fill="white" height="34" rx="12" stroke="#f6c78b" width="220" x="775" y="219"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="885" y="241">prefill missing state</text>
+<rect fill="white" height="34" rx="12" stroke="#f6c78b" width="220" x="775" y="266"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="885" y="288">repair approximate state</text>
+<rect fill="white" height="34" rx="12" stroke="#f6c78b" width="220" x="775" y="313"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="885" y="335">demote, compress, evict</text>
+<rect fill="white" height="34" rx="12" stroke="#f6c78b" width="220" x="775" y="360"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="885" y="382">fallback recompute</text>
+<line marker-end="url(#arrow_struct)" stroke="#2563eb" stroke-width="3" x1="625" x2="735" y1="225" y2="225"></line>
+<rect fill="#f3e8ff" height="80" rx="18" stroke="#cfb3ff" width="250" x="365" y="390"></rect>
+<text fill="#581c87" font-size="15" font-weight="900" text-anchor="middle" x="490" y="422">底座约束选择空间</text>
+<text fill="#40566c" font-size="12" text-anchor="middle" x="490" y="448">HBM, DRAM, CXL, SSD, RDMA, NIXL, NVMe-oF</text>
+<line marker-end="url(#arrow_struct)" stroke="#7c3aed" stroke-width="3" x1="615" x2="735" y1="430" y2="360"></line>
+</svg>
+</div><div class="caption">图 3. 结构视角：应用可见的可复用上下文和模型状态形态，被 KV-aware 控制器编译成具体状态操作；底层 substrate 决定了哪些操作真正便宜。</div></section>
+<section id="journey">
+<h2>7. 请求路径：每一次命中都意味着一次物化义务</h2>
+<div class="takeaway">传输不是调度之后的附属章节。一个迟到、碎片化、CPU-bound 或不安全的 hit，可能名义上提高了命中率，实际上却拉低了 goodput。</div>
+<div class="flow">
+<div class="step"><b>1. 暴露</b><span class="small">应用区分 stable prompt、tool schema、workspace memory、dynamic tail、tenant policy 和 reuse hint。</span></div>
+<div class="step"><b>2. 查找</b><span class="small">Router 对 token block/chunk 做 hash；metadata plane 检查 model、tokenizer、layout、RoPE、dtype、TTL 和 owner。</span></div>
+<div class="step"><b>3. 决策</b><span class="small">在 SLO 和队列状态下选择 route、fetch、prefill、repair、demote 或 recompute。</span></div>
+<div class="step"><b>4. 物化</b><span class="small">准备 memory descriptor、批处理碎片、选择 tier/path、异步传输并报告 completion。</span></div>
+<div class="step"><b>5. Decode</b><span class="small">live decode 消费 resident KV 并追加新 KV；远端逐 token fetch 通常不可接受。</span></div>
+<div class="step"><b>6. 发布</b><span class="small">admit、replicate、compress、evict、demote 或发布新 metadata 供后续请求使用。</span></div>
+</div><div class="caption">图 4. 请求路径：一次 cache hit 只有经过 lookup、compatibility checking、action selection、materialization、decode binding 和 lifecycle publication 之后，才真正变成可用的收益。</div>
+<div class="grid2">
+<div class="good"><strong>Decode 的微妙之处。</strong> KV 复用主要节省 prefill。decode 的收益更多是间接的：减少 prefill 与 decode 的资源竞争、把请求放在所需状态附近、降低 live working set 压力，以及避免把大上下文传输塞进逐 token 路径。</div>
+<div class="warn"><strong>SLO 税。</strong> 这里指为了物化可复用状态而引入的 lookup、queueing、descriptor setup、transfer、validation、retry 和 tail-latency risk。</div>
+</div>
+</section>
+<section id="quant">
+<h2>8. 定量案例：池子越大命中率越高，层级越深搬运税越重</h2>
+<div class="takeaway">以传输为中心来审视 KV reuse，必须同时看两条轴：可达 KV 容量越大，agentic trace 的命中机会越多；但跨的 tier 越多，latency、控制复杂度和尾部风险也越大。</div>
+<div class="grid3">
+<div class="card"><span class="evidence">reported</span><div class="metric">3.8 GB</div><div class="metric-sub">vLLM × Mooncake 分析中，100K-token Kimi-2.5 FP8 KV footprint 的近似值。<a class="ref" href="https://vllm.ai/blog/2026-05-06-mooncake-store">S1</a></div></div>
+<div class="card"><span class="evidence">derived lower bound</span><div class="metric">76 ms</div><div class="metric-sub">3.8 GB 对象经过 400 Gb/s 链路的理想传输时间；未计入协议、排队、registration 和碎片化开销。</div></div>
+<div class="card"><span class="evidence">illustrative</span><div class="metric">命中收益 − 搬运税</div><div class="metric-sub">核心 trade-off：可达池越大，命中机会越高；tier 越深，物化越容易掉进 TTFT 尾部。</div></div>
+</div>
+<div class="warn"><strong>定量免责声明。</strong> 下面的容量等价计算只用 3.8 GB / 100K-token 作为直觉锚点。不同模型、GQA/MLA 选择、精度、压缩和 block granularity 都会改变 KV 对象大小。</div>
+<h3>8.1 锚定尺寸：Kimi-style agentic serving</h3>
+<p>vLLM × Mooncake 分析使用 GB200 节点上的 Kimi-2.5，并指出 100K-token context 对 Kimi-2.5 FP8 KV cache 约为 3.8 GB。这个锚点有用，但不能泛化到所有 LLM。<a class="ref" href="https://vllm.ai/blog/2026-05-06-mooncake-store">S1</a><a class="ref" href="https://recipes.vllm.ai/moonshotai/Kimi-K2.5">S16</a></p>
+<div class="formula">Kimi_style_KV_GB(context) ~= 3.8 GB * context_tokens / 100000
+
+20K tokens  -&gt; 0.76 GB KV
+80K tokens  -&gt; 3.04 GB KV    # 典型的 late-turn trace 大小
+180K tokens -&gt; 6.84 GB KV    # 长上下文尾部
+600K tokens -&gt; 22.8 GB KV    # 压力点，非 trace 均值</div>
+<table><thead><tr><th>Tier / 资源视角</th><th>容量锚点</th><th>100K-prefix 等价数</th><th>Serving 解读</th></tr></thead><tbody>
+<tr><td>单 GPU HBM</td><td>H200: 141 GB HBM3e；B300-class 页面宣传 up to 288 GB HBM/GPU。</td><td>扣除 weights 和 runtime reserve 后，只有一部分可作持久共享 KV。</td><td>适合 live hot state，不适合作为 agentic shared pool。<a class="ref" href="https://www.nvidia.com/en-us/data-center/h200/">S13</a><a class="ref" href="https://www.supermicro.com/en/products/system/gpu/48u/srs-gb300-nvl72">S14</a></td></tr>
+<tr><td>Server DRAM</td><td>Beluga 以每 server 2 TB local DRAM 作为代表性 RDMA-pool 贡献。</td><td>2 TB / 3.8 GB ~= 526 个 100K-prefix 等价。</td><td>warm tier 容量大，但 copy path、PCIe、RDMA setup 和碎片化可能主导 TTFT。<a class="ref" href="https://arxiv.org/pdf/2511.20172">S8</a></td></tr>
+<tr><td>Rack-scale memory</td><td>GB300 NVL72 产品页面列出 up to 21 TB HBM3e 和 17 TB LPDDR5X per rack。</td><td>17 TB / 3.8 GB ~= 4473 个 100K-prefix 等价，未计 replication 和碎片化。</td><td>容量足以把 prefix reuse 变成 fleet control-plane 级问题。<a class="ref" href="https://www.supermicro.com/en/products/system/gpu/48u/srs-gb300-nvl72">S14</a></td></tr>
+<tr><td>CXL / remote DRAM / SSD</td><td>CXL pool 和分布式 KV store 可进一步扩大容量。</td><td>容量上升，latency distribution 也变宽。</td><td>指标变成 hit-rate gain minus restore tail，而不是容量本身。</td></tr>
+</tbody></table>
+<h3>8.2 命中率侧：可达 KV 池如何改变 prefill 分母</h3><div class="grid2"><div class="plotbox"><svg aria-label="Reachable KV pool size to hit rate" class="plot" role="img" viewbox="0 0 760 390">
+<text fill="#0b3558" font-size="16" font-weight="900" x="24" y="28">可达 KV 池大小 → cache hit → prefill goodput</text>
+<text fill="#60758d" font-size="11" x="24" y="50">分母：vLLM × Mooncake 实验中报告的 request-level prefix hit；中间曲线为示意性。</text>
+<line stroke="#d8e5f7" x1="76" x2="676" y1="310" y2="310"></line>
+<line stroke="#edf2f9" x1="76" x2="676" y1="250" y2="250"></line>
+<line stroke="#edf2f9" x1="76" x2="676" y1="190" y2="190"></line>
+<line stroke="#edf2f9" x1="76" x2="676" y1="130" y2="130"></line>
+<line stroke="#edf2f9" x1="76" x2="676" y1="70" y2="70"></line>
+<text fill="#60758d" font-size="11" text-anchor="end" x="64" y="314">0%</text><text fill="#60758d" font-size="11" text-anchor="end" x="64" y="254">25%</text><text fill="#60758d" font-size="11" text-anchor="end" x="64" y="194">50%</text><text fill="#60758d" font-size="11" text-anchor="end" x="64" y="134">75%</text><text fill="#60758d" font-size="11" text-anchor="end" x="64" y="74">100%</text>
+<line stroke="#edf2f9" x1="76" x2="76" y1="310" y2="70"></line><text fill="#60758d" font-size="11" text-anchor="middle" x="76" y="334">1</text>
+<line stroke="#edf2f9" x1="307" x2="307" y1="310" y2="70"></line><text fill="#60758d" font-size="11" text-anchor="middle" x="307" y="334">10</text>
+<line stroke="#edf2f9" x1="537" x2="537" y1="310" y2="70"></line><text fill="#60758d" font-size="11" text-anchor="middle" x="537" y="334">100</text>
+<line stroke="#edf2f9" x1="676" x2="676" y1="310" y2="70"></line><text fill="#60758d" font-size="11" text-anchor="middle" x="676" y="334">400</text>
+<path d="M 76 306 L 284 250 L 515 142 L 633 89 L 665 82" fill="none" stroke="#0f766e" stroke-linecap="round" stroke-width="4"></path>
+<circle cx="76" cy="306" fill="#2563eb" r="6" stroke="white" stroke-width="2"></circle><text fill="#0b3558" font-size="11" font-weight="800" x="86" y="299">1.7%</text>
+<circle cx="633" cy="89" fill="#2563eb" r="6" stroke="white" stroke-width="2"></circle><text fill="#0b3558" font-size="11" font-weight="800" x="643" y="81">92.2%</text>
+<circle cx="665" cy="82" fill="#2563eb" r="6" stroke="white" stroke-width="2"></circle><text fill="#0b3558" font-size="11" font-weight="800" x="675" y="74">&gt;95%</text>
+<text fill="#60758d" font-size="12" text-anchor="middle" x="378" y="360">有效可达 100K-prefix 对象数，对数坐标</text>
+</svg><div class="caption">图 5. 命中率直觉：扩大有效可达 KV 池，可以把 agentic trace 中原本在本地 miss 掉的重复 prefix 转化为可复用的 prefill 节省。</div></div><div><h4>解读</h4><p>在 Codex-style agentic trace 上，仅靠本地或 system-prompt cache 可能错过大部分可复用状态。分布式池扩大了跨 turn、跨 instance 的可达 working set，使得系统经常只需 prefill 新增的 delta，而不必重新计算整个累积上下文。</p><p class="small">一个 prefill-only 的直觉：如果某一 turn 的 90% 是可复用 prefix，那么 h=1.7% 时仍需做约 98.5% 的 prefill 工作；h=92.2% 时只剩约 17.0%。这给出约 5.8x 的理论 prefill-work 缩减，实际报告的吞吐提升为 3.8x，说明命中率确实不是终点。</p></div></div><h3>8.3 搬运侧：tier 越深，搬运税越容易吃掉收益</h3><div class="grid2"><div><h4>解读</h4><p>搬运图使用同一个 3.8 GB / 100K-token Kimi-style 对象。柱高来自峰值带宽除法，是下界，不是测得 TTFT。真实系统还要付 block lookup、transfer setup、registration、scatter-gather 碎片化、endpoint selection、retry、interference 和 tail queueing 的代价。</p><p class="small">因此 tier depth 必须和 policy 绑定。更多存储可以提高 p_hit，但也可能推高 p_fetch 和 transfer_cost；只有 route-to-state、prefetch、batching 和 direct path 把对象移出请求 critical path 时，命中才真正有收益。</p></div><div class="plotbox"><svg aria-label="Movement lower bound for one Kimi-style KV object" class="plot" role="img" viewbox="0 0 760 390">
+<text fill="#0b3558" font-size="16" font-weight="900" x="24" y="28">一个 100K-token Kimi-style KV 对象的搬运下界</text>
+<text fill="#60758d" font-size="11" x="24" y="50">下界 = 3.8 GB / 峰值带宽。真实 p95 可能远高于此。</text>
+<line stroke="#d8e5f7" x1="84" x2="684" y1="310" y2="310"></line><text fill="#60758d" font-size="11" text-anchor="end" x="72" y="314">0 ms</text>
+<line stroke="#edf2f9" x1="84" x2="684" y1="270" y2="270"></line><text fill="#60758d" font-size="11" text-anchor="end" x="72" y="274">50</text>
+<line stroke="#edf2f9" x1="84" x2="684" y1="230" y2="230"></line><text fill="#60758d" font-size="11" text-anchor="end" x="72" y="234">100</text>
+<line stroke="#edf2f9" x1="84" x2="684" y1="150" y2="150"></line><text fill="#60758d" font-size="11" text-anchor="end" x="72" y="154">200</text>
+<line stroke="#edf2f9" x1="84" x2="684" y1="70" y2="70"></line><text fill="#60758d" font-size="11" text-anchor="end" x="72" y="74">300</text>
+<rect fill="#f97316" height="1" rx="6" width="72" x="112" y="309"></rect><text fill="#0b3558" font-size="11" font-weight="900" text-anchor="middle" x="148" y="298">0.8</text><text fill="#20384f" font-size="12" font-weight="850" text-anchor="middle" x="148" y="335">HBM</text>
+<rect fill="#f97316" height="2" rx="6" width="72" x="234" y="308"></rect><text fill="#0b3558" font-size="11" font-weight="900" text-anchor="middle" x="270" y="298">2.1</text><text fill="#20384f" font-size="12" font-weight="850" text-anchor="middle" x="270" y="335">NVLink</text>
+<rect fill="#f97316" height="47" rx="6" width="72" x="356" y="263"></rect><text fill="#0b3558" font-size="11" font-weight="900" text-anchor="middle" x="392" y="255">59</text><text fill="#20384f" font-size="12" font-weight="850" text-anchor="middle" x="392" y="335">PCIe5</text>
+<rect fill="#f97316" height="61" rx="6" width="72" x="478" y="249"></rect><text fill="#0b3558" font-size="11" font-weight="900" text-anchor="middle" x="514" y="241">76</text><text fill="#20384f" font-size="12" font-weight="850" text-anchor="middle" x="514" y="335">400G</text>
+<rect fill="#f97316" height="217" rx="6" width="72" x="600" y="93"></rect><text fill="#0b3558" font-size="11" font-weight="900" text-anchor="middle" x="636" y="85">271</text><text fill="#20384f" font-size="12" font-weight="850" text-anchor="middle" x="636" y="335">NVMe</text>
+<text fill="#60758d" font-size="11" text-anchor="middle" x="380" y="365">仅为示意性下界；非端到端测量延迟。</text>
+</svg><div class="caption">图 6. 搬运下界：更大、更深的 KV 池提高了复用机会，但传输路径的延迟和方差足以抹掉命中收益。</div></div></div></section>
+<section id="abi">
+<h2>9. KV 对象 ABI：先让状态可见，再谈聪明传输</h2>
+<div class="takeaway">传输层无法优化匿名的 tensor bytes。它需要一套最小 KV object contract，暴露 identity、compatibility、location、validity、policy 和 completion semantics。</div>
+<table><thead><tr><th>字段组</th><th>代表字段</th><th>为什么重要</th></tr></thead><tbody>
+<tr><td>Identity</td><td>object id、block hash、request/session/workflow id、producer engine id。</td><td>给可复用状态命名，避免重复发现。</td></tr>
+<tr><td>Model compatibility</td><td>model id、tokenizer id、architecture、layer/head layout、block size、RoPE/position offset。</td><td>防止跨不兼容执行错误复用。</td></tr>
+<tr><td>Representation</td><td>dtype、quantization、compression、sparsity、chunk/page format、alignment。</td><td>决定 destination engine 能否直接绑定，还是必须 decode/repair。</td></tr>
+<tr><td>Policy and governance</td><td>tenant、ACL、privacy label、TTL、provenance、confidence、quality-risk class。</td><td>决定复用是否被允许、可审计、可撤销。</td></tr>
+<tr><td>Location and memory descriptor</td><td>tier、address、length、registration state、NIC affinity、CXL region、NVMe object、fault domain。</td><td>让 transport 构造真实的搬运计划，而不是盲 RPC。</td></tr>
+<tr><td>Lifecycle and telemetry</td><td>validity epoch、owner、refcount、hit count、last access、queue delay、p95 transfer time、fallback reason。</td><td>反馈给 eviction、routing、admission 和事后调试。</td></tr>
+</tbody></table>
+</section>
+<section id="mooncake">
+<h2>10. Mooncake TE：transfer-plan substrate，不只是 RDMA wrapper</h2>
+<div class="takeaway">Mooncake TE 的关键不只是"能走 RDMA"。RDMA 只是一个 backend；更高层的贡献是 registered segments、异步 BatchTransfer、拓扑感知 path selection，以及可被 Mooncake Store 或 vLLM connector 组合成 KV 物化方案的底座能力。</div>
+<div class="grid2">
+<div>
+<h3>它在 raw network transport 之上增加了什么</h3>
+<ul>
+<li><strong>Segments：</strong>覆盖 RAM、VRAM 和 NVMe-oF-like storage endpoints 的命名地址空间。</li>
+<li><strong>BatchTransfer：</strong>对非连续区域发起异步 read/write batches，避免每个碎片走独立的慢路径。</li>
+<li><strong>Backend diversity：</strong>文档覆盖 TCP、RDMA/GPUDirect RDMA、EFA、NVMe-oF、NVLink、HIP 等路径。</li>
+<li><strong>Path management：</strong>NIC preference、多 NIC pooling、大传输 slicing、endpoint pooling、retry 和 completion semantics。</li>
+</ul>
+<p class="small">vLLM integration 使用 Mooncake master 管理 KV-block metadata 和 client health，由 workers 执行后台搬运，并在可用时用 GPUDirect RDMA 实现不占 SM 的 zero-copy KV transfer。<a class="ref" href="https://vllm.ai/blog/2026-05-06-mooncake-store">S1</a><a class="ref" href="https://kvcache-ai.github.io/Mooncake/design/transfer-engine/index.html">S2</a></p>
+</div>
+<div class="plotbox"><svg aria-label="Mooncake TE transfer plan substrate" class="plot" role="img" viewbox="0 0 880 520">
+<defs><marker id="arrow_te" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0 0L10 5L0 10z" fill="#2563eb"></path></marker></defs>
+<text fill="#0b3558" font-size="17" font-weight="900" x="30" y="34">Mooncake TE: 从 KV 对象到 engine-ready pages</text>
+<rect fill="#e8f2ff" height="90" rx="18" stroke="#aac8ef" width="170" x="40" y="75"></rect><text fill="#0b3558" font-size="14" font-weight="900" text-anchor="middle" x="125" y="108">KV object</text><text fill="#40566c" font-size="11" text-anchor="middle" x="125" y="134">blocks, hashes, sizes</text>
+<rect fill="#eefdf8" height="90" rx="18" stroke="#9ed9c7" width="190" x="280" y="75"></rect><text fill="#064e3b" font-size="14" font-weight="900" text-anchor="middle" x="375" y="108">Segment registry</text><text fill="#40566c" font-size="11" text-anchor="middle" x="375" y="134">DRAM, VRAM, NVMe-oF</text>
+<rect fill="#fff7ed" height="90" rx="18" stroke="#f6c78b" width="220" x="540" y="75"></rect><text fill="#92400e" font-size="14" font-weight="900" text-anchor="middle" x="650" y="108">BatchTransfer</text><text fill="#40566c" font-size="11" text-anchor="middle" x="650" y="134">scatter-gather read/write</text>
+<line marker-end="url(#arrow_te)" stroke="#2563eb" stroke-width="3" x1="210" x2="280" y1="120" y2="120"></line><line marker-end="url(#arrow_te)" stroke="#2563eb" stroke-width="3" x1="470" x2="540" y1="120" y2="120"></line>
+<rect fill="white" height="70" rx="16" stroke="#dce8f6" width="160" x="80" y="250"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="160" y="282">Path selection</text><text fill="#60758d" font-size="10" text-anchor="middle" x="160" y="303">NIC, topology, backend</text>
+<rect fill="white" height="70" rx="16" stroke="#dce8f6" width="160" x="325" y="250"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="405" y="282">Async I/O</text><text fill="#60758d" font-size="10" text-anchor="middle" x="405" y="303">background workers</text>
+<rect fill="white" height="70" rx="16" stroke="#dce8f6" width="160" x="570" y="250"></rect><text fill="#0b3558" font-size="12" font-weight="850" text-anchor="middle" x="650" y="282">Completion</text><text fill="#60758d" font-size="10" text-anchor="middle" x="650" y="303">bind or fallback</text>
+<path d="M650 165 C660 210, 210 210, 160 250" fill="none" marker-end="url(#arrow_te)" stroke="#2563eb" stroke-width="3"></path>
+<line marker-end="url(#arrow_te)" stroke="#2563eb" stroke-width="3" x1="240" x2="325" y1="285" y2="285"></line><line marker-end="url(#arrow_te)" stroke="#2563eb" stroke-width="3" x1="485" x2="570" y1="285" y2="285"></line>
+<rect fill="#f3e8ff" height="72" rx="18" stroke="#cfb3ff" width="460" x="210" y="405"></rect><text fill="#581c87" font-size="14" font-weight="900" text-anchor="middle" x="440" y="435">Engine-ready KV pages</text><text fill="#40566c" font-size="11" text-anchor="middle" x="440" y="459">vLLM connector / PD connector / store connector 可组合该结果。</text>
+<line marker-end="url(#arrow_te)" stroke="#7c3aed" stroke-width="3" x1="650" x2="520" y1="320" y2="405"></line>
+</svg></div>
+</div><div class="caption">图 7. Mooncake TE 把 KV object intent 和具体传输执行分开：真正有用的抽象是 transfer plan，而不是一次 RDMA copy。</div>
+<h3>Case-study 视角</h3>
+<table class="two-col-table"><tbody>
+<tr><td>Problem</td><td>让外部 KV 状态能够跨 GPU、DRAM、SSD 和网络路径物化，同时避免每个 cache hit 都变成 CPU-bound 的拷贝工作。</td></tr>
+<tr><td>Boundary moved</td><td>engine-local KV 变成可支持 PD handoff 和跨请求复用的 distributed KV service object。</td></tr>
+<tr><td>Data path</td><td>registered segments、异步 batch transfer、endpoint selection，以及可用时的 GPUDirect RDMA。</td></tr>
+<tr><td>Control dependency</td><td>KV-block metadata、hash lookup、worker health、cache admission、eviction 和 cache-aware routing 位于 transfer engine 之上。</td></tr>
+<tr><td>Evidence</td><td>生产系统论文加 vLLM integration report；reported 数字应在 Kimi/Codex/SWE-bench Pro 条件下阅读。</td></tr>
+<tr><td>Best fit</td><td>cluster-level KV pooling、重复或 agentic prefixes、PD serving、多层级 KV 物化。</td></tr>
+<tr><td>Primary stress point</td><td>竞争下的 tail latency、metadata freshness、tenant policy，以及 transfer completion 能否在重算胜出之前到达。</td></tr>
+<tr><td>Not a claim</td><td>TE 本身并不定义所有 reuse 场景的 compatibility、governance 或 quality policy。</td></tr>
+</tbody></table>
+</section>
+<section id="beluga">
+<h2>11. Beluga：CXL 是底座，Beluga-KVCache 才是 KV-aware 层</h2>
+<div class="takeaway">Beluga 最清晰的读法是两步：先指出 RDMA-style movement 对碎片化 KV 不友好；再在通用 CXL memory semantics 之上加入 KV-aware indexing、copy 和 control。CXL pooling 本身并不理解 KV block。</div><div class="plotbox">
+<svg aria-label="Beluga RDMA to CXL to KV-aware CXL" class="plot" role="img" viewbox="0 0 1040 430">
+<defs><marker id="arrow_beluga" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0 0L10 5L0 10z" fill="#2563eb"></path></marker></defs>
+<text fill="#0b3558" font-size="17" font-weight="900" x="35" y="36">Beluga: memory semantics 有帮助，但 KV awareness 是加在 CXL 之上的</text>
+<rect fill="#fff7ed" height="235" rx="18" stroke="#f6c78b" width="275" x="45" y="90"></rect>
+<text fill="#92400e" font-size="15" font-weight="900" text-anchor="middle" x="182" y="124">RDMA memory pool</text>
+<text fill="#40566c" font-size="12" text-anchor="middle" x="182" y="154">verbs, QPs, completion queues</text><text fill="#40566c" font-size="12" text-anchor="middle" x="182" y="178">fragmented sglist pressure</text><text fill="#40566c" font-size="12" text-anchor="middle" x="182" y="202">CPU or GPU polling overhead</text><text fill="#40566c" font-size="12" text-anchor="middle" x="182" y="226">scheduler still chases locality</text>
+<rect fill="#eef2ff" height="235" rx="18" stroke="#b9c5ff" width="275" x="380" y="90"></rect>
+<text fill="#3730a3" font-size="15" font-weight="900" text-anchor="middle" x="518" y="124">Generic CXL pool</text>
+<text fill="#40566c" font-size="12" text-anchor="middle" x="518" y="154">load/store address space</text><text fill="#40566c" font-size="12" text-anchor="middle" x="518" y="178">switch-attached memory</text><text fill="#40566c" font-size="12" text-anchor="middle" x="518" y="202">not KV-block aware</text><text fill="#40566c" font-size="12" text-anchor="middle" x="518" y="226">still needs index and layout logic</text>
+<rect fill="#eefdf8" height="235" rx="18" stroke="#9ed9c7" width="275" x="715" y="90"></rect>
+<text fill="#064e3b" font-size="15" font-weight="900" text-anchor="middle" x="852" y="124">Beluga-KVCache</text>
+<text fill="#40566c" font-size="12" text-anchor="middle" x="852" y="154">block hash → global address</text><text fill="#40566c" font-size="12" text-anchor="middle" x="852" y="178">gather-write / scatter-read kernels</text><text fill="#40566c" font-size="12" text-anchor="middle" x="852" y="202">CXL-based RPC via shared slots</text><text fill="#40566c" font-size="12" text-anchor="middle" x="852" y="226">scheduler simplification in design</text>
+<line marker-end="url(#arrow_beluga)" stroke="#2563eb" stroke-width="3" x1="320" x2="380" y1="208" y2="208"></line><line marker-end="url(#arrow_beluga)" stroke="#2563eb" stroke-width="3" x1="655" x2="715" y1="208" y2="208"></line>
+<text fill="#60758d" font-size="12" text-anchor="middle" x="520" y="370">KV awareness 是 CXL 之上的软件层，不是 CXL switch 的原生属性。</text>
+</svg>
+</div><div class="caption">图 8. Beluga 的 framing：CXL 提供 shared-memory semantics；KV awareness 来自其上的 index、layout handling、copy kernels 和 scheduling。</div>
+<div class="grid2">
+<div>
+<h3>Beluga 对 RDMA 的批评</h3>
+<p>Beluga 认为 RDMA 是网络协议而非内存总线。CPU-driven path 可能经过 bounce buffer；GPU-driven path 可能需要 polling kernel 和同步；碎片化 KV layout 又会压迫 NIC scatter-gather 上限。论文给出了 Qwen-32B GQA 的具体例子：每 token 有 128 个非连续 chunks，更稀疏的情况可能产生更多 fragments。<a class="ref" href="https://arxiv.org/pdf/2511.20172">S8</a></p>
+</div>
+<div>
+<h3>Beluga 对 CXL pooling 的补足</h3>
+<p>CXL switch-attached memory 提供 shared-memory semantic，但它不知道一个 KV 对象的 model、tokenizer、RoPE position、block layout 或 tenant policy。Beluga-KVCache 增加了 KVCache index、data copy kernels、shared-memory RPC path 和 scheduler simplification，才让 CXL pool 变成 KV-aware。</p>
+</div>
+</div>
+<table><thead><tr><th>问题</th><th>Beluga 的回答</th><th>实际约束</th></tr></thead><tbody>
+<tr><td>为什么需要 memory semantics?</td><td>load/store-like access 可以去掉一部分 verbs/queue/completion overhead；论文报告了相对 RDMA baseline 的 microbenchmark latency gains。</td><td>CXL bandwidth、switch contention、coherence scope、adapter count、GPU-to-CXL path 成熟度仍是部署约束。</td></tr>
+<tr><td>为什么不能只说 CXL pooling?</td><td>KV 仍然需要 block metadata、layout conversion、compatibility checks 和 lifecycle policy。</td><td>KV awareness 是上层软件，不是 memory fabric 的原生功能。</td></tr>
+<tr><td>为什么不能替代所有 RDMA?</td><td>Beluga 最适合作为 nearby shared memory，服务低延迟 KV access。</td><td>更大范围的 cluster 和 cross-cluster movement 仍然更自然地落在 RDMA/网络传输上。</td></tr>
+</tbody></table>
+<h3>Case-study 视角</h3>
+<table class="two-col-table"><tbody>
+<tr><td>Problem</td><td>KV 大、碎片化、跨 tier 访问频繁时，RDMA-style movement 会变得笨重。</td></tr>
+<tr><td>Boundary moved</td><td>remote memory pool 变成 CXL memory-semantic pool，并叠加 KV-aware software layer。</td></tr>
+<tr><td>Data path</td><td>CXL-attached memory semantics 加 KV index、gather/scatter-oriented access、copy kernels 和 RPC/control paths。</td></tr>
+<tr><td>Control dependency</td><td>raw CXL memory 之上的 placement、memory allocation、layout conversion、block indexing 和 scheduler integration。</td></tr>
+<tr><td>Evidence</td><td>preprint-level system proposal and evaluation；作为架构方向有价值，但仍依赖 CXL 生态成熟度。</td></tr>
+<tr><td>Best fit</td><td>nearby pod/rack memory expansion，且 low-latency shared memory semantics 能胜过显式搬运开销。</td></tr>
+<tr><td>Primary stress point</td><td>CXL switch contention、GPU-to-CXL access path、coherence scope、deployment availability 和 multi-tenant isolation。</td></tr>
+<tr><td>Not a claim</td><td>CXL pooling 不会自动 KV-aware；Beluga 是在底座上方加入 KV semantics。</td></tr>
+</tbody></table>
+</section>
+<section id="dynamo">
+<h2>12. Dynamo / NIXL：聚焦 direct handoff，而非完整 KV 生命周期</h2>
+<div class="takeaway">Dynamo 的传输强项是生产化 disaggregated serving 中基于 NIXL 的 direct VRAM-to-VRAM KV transfer。它最适合在快速 NVIDIA-oriented fabric 内完成 prefill 到 decode 的 KV 交接。</div><div class="plotbox">
+<svg aria-label="Dynamo NIXL direct KV handoff" class="plot" role="img" viewbox="0 0 1040 390">
+<defs><marker id="arrow_dyn" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0 0L10 5L0 10z" fill="#2563eb"></path></marker></defs>
+<text fill="#0b3558" font-size="17" font-weight="900" x="34" y="34">Dynamo / NIXL: 围绕 direct prefill-to-decode KV handoff 的编排</text>
+<rect fill="#eef2ff" height="170" rx="18" stroke="#b9c5ff" width="240" x="40" y="92"></rect>
+<text fill="#3730a3" font-size="15" font-weight="900" text-anchor="middle" x="160" y="126">PrefillRouter</text><text fill="#40566c" font-size="12" text-anchor="middle" x="160" y="154">select prefill worker</text><text fill="#40566c" font-size="12" text-anchor="middle" x="160" y="176">cache-overlap + load score</text><text fill="#40566c" font-size="12" text-anchor="middle" x="160" y="198">inject transfer metadata</text>
+<rect fill="#e8f2ff" height="170" rx="18" stroke="#aac8ef" width="240" x="400" y="92"></rect>
+<text fill="#0b3558" font-size="15" font-weight="900" text-anchor="middle" x="520" y="126">Prefill worker</text><text fill="#40566c" font-size="12" text-anchor="middle" x="520" y="154">compute prompt</text><text fill="#40566c" font-size="12" text-anchor="middle" x="520" y="176">produce KV in VRAM</text><text fill="#40566c" font-size="12" text-anchor="middle" x="520" y="198">return backend metadata</text>
+<rect fill="#eefdf8" height="170" rx="18" stroke="#9ed9c7" width="240" x="760" y="92"></rect>
+<text fill="#064e3b" font-size="15" font-weight="900" text-anchor="middle" x="880" y="126">Decode worker</text><text fill="#40566c" font-size="12" text-anchor="middle" x="880" y="154">begin decode path</text><text fill="#40566c" font-size="12" text-anchor="middle" x="880" y="176">receive KV directly into VRAM</text><text fill="#40566c" font-size="12" text-anchor="middle" x="880" y="198">overlap transfer and work</text>
+<line marker-end="url(#arrow_dyn)" stroke="#2563eb" stroke-width="3" x1="280" x2="400" y1="160" y2="160"></line><text fill="#2563eb" font-size="11" text-anchor="middle" x="340" y="146">prefill request</text>
+<line marker-end="url(#arrow_dyn)" stroke="#2563eb" stroke-width="3" x1="640" x2="760" y1="160" y2="160"></line><text fill="#2563eb" font-size="11" text-anchor="middle" x="700" y="146">decode metadata</text>
+<path d="M520 262 C585 332, 800 332, 880 262" fill="none" marker-end="url(#arrow_dyn)" stroke="#f97316" stroke-width="4"></path>
+<text fill="#9a3412" font-size="12" font-weight="900" text-anchor="middle" x="700" y="350">NIXL: nonblocking VRAM-to-VRAM KV transfer over NVLink / IB / UCX-style paths</text>
+</svg>
+</div><div class="caption">图 9. Dynamo/NIXL 的核心价值是生产化 disaggregated serving 路径中 direct, coordinated prefill-to-decode KV handoff。</div>
+<p>Dynamo 文档把 disaggregated execution 描述为：prefill 计算 KV、KV transfer 到 decode、decode 生成 token。文档说明 NIXL 可以把 KV 直接从 prefill VRAM 传到 decode VRAM，并且 transfer 是 nonblocking 的。Router 使用 cache overlap 和 load 信号，注入 backend-specific transfer metadata，并在 fabric backends 上协调传输。<a class="ref" href="https://docs.dynamo.nvidia.com/dynamo/design-docs/disaggregated-serving">S7</a></p>
+<table><thead><tr><th>维度</th><th>Mooncake TE / Store</th><th>Dynamo / NIXL</th></tr></thead><tbody>
+<tr><td>定位</td><td>KV-centric distributed store 加 multi-substrate transfer substrate。</td><td>production disaggregated serving stack 中的 direct KV handoff。</td></tr>
+<tr><td>最佳路径</td><td>HBM/DRAM/NVMe-oF-like segments、RDMA/TCP/GDS-like movement、distributed pool。</td><td>prefill VRAM 到 decode VRAM，在快速 GPU/network fabric 内 nonblocking transfer。</td></tr>
+<tr><td>强项</td><td>更宽的 external KV lifecycle：cache pool、offload、cross-instance prefix reuse。</td><td>与 NVIDIA GPU/fabric ecosystem 深度对齐，handoff 编排紧密。</td></tr>
+<tr><td>潜在缺口</td><td>transport 之上需要更多 policy 和 governance。</td><td>除非叠加其他 cache/tiering 层，不等于 general-purpose long-lived multi-tier KV store。</td></tr>
+</tbody></table>
+<h3>Case-study 视角</h3>
+<table class="two-col-table"><tbody>
+<tr><td>Problem</td><td>在 PD serving 中，prefill 产生的 KV 必须快速到达 decode，不能阻塞 critical path，也不能消耗不必要的 GPU compute。</td></tr>
+<tr><td>Boundary moved</td><td>prefill/decode 分离变成由 serving router 协调的 production direct-handoff path。</td></tr>
+<tr><td>Data path</td><td>基于 NIXL 的 direct prefill-VRAM 到 decode-VRAM transfer，带 backend-specific metadata 和 nonblocking semantics。</td></tr>
+<tr><td>Control dependency</td><td>router cache-overlap scoring、load signals、transfer metadata injection 和 decode worker coordination。</td></tr>
+<tr><td>Evidence</td><td>vendor documentation 和产品架构；是生产信号而非独立 academic benchmark。</td></tr>
+<tr><td>Best fit</td><td>NVIDIA-aligned disaggregated serving，关键边界是 fast prefill-to-decode handoff。</td></tr>
+<tr><td>Primary stress point</td><td>external cache lifecycle、multi-tier persistence，以及离开 assumed fabric/software stack 后的可移植性。</td></tr>
+<tr><td>Not a claim</td><td>NIXL direct handoff 不自动意味着完整 long-lived distributed KV store。</td></tr>
+</tbody></table>
+</section>
+<section id="prfaas">
+<h2>13. PrfaaS：跨集群 prefill 是有条件的边界外移</h2>
+<div class="takeaway">PrfaaS 的意义在于追问 PD boundary 能外移多远。答案不是"越远越好"：remote prefill 只有在模型侧 KV 缩减、selective admission、bandwidth-aware routing 和 tail-risk control 同时成立时才划算。</div><div class="wide-figure"><div class="plotbox">
+<svg aria-label="PrfaaS cross cluster prefill" class="plot" role="img" viewbox="0 0 1100 420">
+<defs><marker id="arrow_pr_v8" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewbox="0 0 10 10"><path d="M0 0L10 5L0 10z" fill="#2563eb"></path></marker></defs>
+<text fill="#0b3558" font-size="21" font-weight="900" x="32" y="36">PrfaaS: 返回状态足够小之后，跨集群 prefill 才成立</text>
+<text fill="#60758d" font-size="12" x="32" y="62">Remote prefill 是受 admission 控制的动作，不是本地 prefill 的默认替代。</text>
+<rect fill="#e8f2ff" height="150" rx="22" stroke="#aac8ef" width="250" x="70" y="115"></rect><text fill="#0b3558" font-size="16" font-weight="900" text-anchor="middle" x="195" y="152">本地 PD 集群</text><text fill="#40566c" font-size="13" text-anchor="middle" x="195" y="184">decode + short prefills</text><text fill="#40566c" font-size="13" text-anchor="middle" x="195" y="208">local prefix cache</text><text fill="#40566c" font-size="13" text-anchor="middle" x="195" y="232">latency-sensitive SLO</text>
+<rect fill="#fff7ed" height="150" rx="22" stroke="#f6c78b" width="250" x="425" y="115"></rect><text fill="#92400e" font-size="16" font-weight="900" text-anchor="middle" x="550" y="152">远端 Prefill</text><text fill="#40566c" font-size="13" text-anchor="middle" x="550" y="184">长 uncached prompts</text><text fill="#40566c" font-size="13" text-anchor="middle" x="550" y="208">算力富余节点</text><text fill="#40566c" font-size="13" text-anchor="middle" x="550" y="232">bandwidth-aware admission</text>
+<rect fill="#eefdf8" height="150" rx="22" stroke="#9ed9c7" width="250" x="780" y="115"></rect><text fill="#064e3b" font-size="16" font-weight="900" text-anchor="middle" x="905" y="152">回传 KV / 状态</text><text fill="#40566c" font-size="13" text-anchor="middle" x="905" y="184">足够小，链路可承载</text><text fill="#40566c" font-size="13" text-anchor="middle" x="905" y="208">传输尾部可控</text><text fill="#40566c" font-size="13" text-anchor="middle" x="905" y="232">decode 在本地继续</text>
+<path d="M320 185 C360 150, 385 150, 425 185" fill="none" marker-end="url(#arrow_pr_v8)" stroke="#2563eb" stroke-width="4"></path><text fill="#2563eb" font-size="12" font-weight="850" text-anchor="middle" x="372" y="140">选择性卸载</text>
+<path d="M675 190 C715 190, 740 190, 780 190" fill="none" marker-end="url(#arrow_pr_v8)" stroke="#2563eb" stroke-width="4"></path><text fill="#2563eb" font-size="12" font-weight="850" text-anchor="middle" x="728" y="174">KV 回传</text>
+<path d="M905 265 C760 365, 250 365, 195 265" fill="none" marker-end="url(#arrow_pr_v8)" stroke="#0f766e" stroke-width="4"></path><text fill="#0f766e" font-size="13" font-weight="850" text-anchor="middle" x="550" y="382">远端排队 + 远端 prefill + KV 传输 之和必须小于节省的本地 prefill 时间</text>
+</svg>
+<div class="caption">图 10. PrfaaS 图强调跨集群 prefill 的条件性：返回状态必须足够小，且远端端到端路径必须在 tail-risk 约束下胜过本地 prefill。</div>
+</div></div>
+<p>PrfaaS 的出发点很明确：传统 dense-attention PD 往往被绑定在高带宽域内，因为 prefill 产生的 KV 太大。Hybrid 或 KV-efficient attention 可以缩小返回状态，使 commodity Ethernet 或跨集群服务对某些 long-context 请求变得可行。<a class="ref" href="https://arxiv.org/pdf/2604.15039">S9</a></p>
+<div class="grid2">
+<div>
+<table><thead><tr><th>条件</th><th>为什么重要</th><th>PrfaaS 机制</th></tr></thead><tbody>
+<tr><td>长 uncached prefill</td><td>短请求省下的计算不足以支付跨集群传输成本。</td><td>基于长度的 threshold routing。</td></tr>
+<tr><td>返回 KV 足够小</td><td>dense model 可能输出太多 KV，不适合 commodity Ethernet。</td><td>KV-efficient hybrid attention 和模型侧缩减。</td></tr>
+<tr><td>Bandwidth-aware admission</td><td>跨集群链路会波动并成为瓶颈。</td><td>拥塞积累前做 bandwidth-aware scheduling。</td></tr>
+<tr><td>Cache-aware placement</td><td>prefix cache 分布不均会抹掉 remote prefill 收益。</td><td>global KV manager 和 hybrid prefix cache。</td></tr>
+</tbody></table>
+</div>
+<div>
+<div class="formula">remote_prefill 划算的条件：
+
+saved_local_prefill_time
+  &gt; remote_queueing
+    + remote_prefill_time
+    + KV_transfer_time
+    + metadata_control_overhead
+    + tail_risk
+    + fallback_risk</div>
+<div class="warn small">这是一条 operator decision rule。PrfaaS 不是说 remote prefill 普遍更好，而是说当返回状态足够小、网络路径受控时，它可以成为一种选择性动作。</div>
+</div>
+</div>
+<h3>Case-study 视角</h3>
+<table class="two-col-table"><tbody>
+<tr><td>Problem</td><td>prefill 需求 bursty 且异构；本地 cluster 可能被 decode pressure 占住，而远端 capacity 可吸收长 prefill。</td></tr>
+<tr><td>Boundary moved</td><td>PD 边界从 intra-cluster 扩展到 selected requests 的跨集群/跨站点 prefill service。</td></tr>
+<tr><td>Data path</td><td>远端 prefill 加回传 KV/state，经由 less specialized links；前提是模型侧 KV 缩减和带宽可行。</td></tr>
+<tr><td>Control dependency</td><td>length threshold、bandwidth-aware admission、global KV manager、cache placement 和 tail-risk fallback。</td></tr>
+<tr><td>Evidence</td><td>preprint-level 部署架构提案；在 selective long-context admission 下更有说服力。</td></tr>
+<tr><td>Best fit</td><td>长 uncached prompts、bursty prefill、异构集群、KV-efficient 模型架构。</td></tr>
+<tr><td>Primary stress point</td><td>WAN/跨集群排队、带宽波动、回传状态大小，以及 remote path miss SLO 时的恢复。</td></tr>
+<tr><td>Not a claim</td><td>remote prefill 并不总是更好；只有不等式成立时才应选择。</td></tr>
+</tbody></table>
+</section>
+<section id="compare">
+<h2>14. 对比图谱：按挪动的边界比较，不按单个 speedup 数字比较</h2>
+<div class="takeaway">Mooncake TE、Beluga、Dynamo/NIXL 和 PrfaaS 回答的是不同的传输问题。有效比较应看 boundary、data-path contribution、control-plane dependency、best-fit workload、failure mode 和 evidence type。</div>
+<table><thead><tr><th>工作</th><th>挪动的边界</th><th>数据路径主张</th><th>控制面依赖</th><th>最佳适用场景</th><th>证据类型</th><th>压力点 / 非目标</th></tr></thead><tbody>
+<tr><td>Mooncake TE / Store</td><td>engine-local KV → distributed multi-tier KV service。</td><td>segments plus BatchTransfer，覆盖异构 memory/storage/network paths。</td><td>metadata master、block hashes、health、admission、eviction、route policy。</td><td>cluster KV pool、PD、agentic prefix reuse。</td><td>paper + integration report。</td><td>竞争下 tail；正确性和治理在 TE layer 之上。</td></tr>
+<tr><td>Beluga</td><td>RDMA memory pool → CXL memory-semantic KV pool。</td><td>load/store-like access 加 KV index、gather/scatter kernels、CXL RPC。</td><td>block index、layout conversion、CXL memory allocation、scheduler integration。</td><td>nearby rack/pod memory expansion，低延迟 KV access。</td><td>preprint proposal。</td><td>CXL 生态成熟度、switch contention、GPU-to-CXL path、coherence scope。</td></tr>
+<tr><td>Dynamo / NIXL</td><td>prefill/decode handoff → production direct VRAM transfer。</td><td>router metadata 协调的 nonblocking prefill-VRAM 到 decode-VRAM transfer。</td><td>PrefillRouter、cache-overlap/load scoring、transfer metadata injection。</td><td>NVIDIA GPU fabrics、production PD serving、fast handoff。</td><td>产品文档。</td><td>除非搭配 KV store/tiering layers，不是完整 external cache lifecycle。</td></tr>
+<tr><td>PrfaaS</td><td>PD boundary → 跨集群 prefill service。</td><td>selective long-context offload，加 over less specialized links 的回传 KV。</td><td>bandwidth-aware admission、length threshold、global KV manager。</td><td>KV-efficient 模型 加 bursty long prefills。</td><td>preprint architecture。</td><td>tail risk、带宽波动、cache distribution、selective admission errors。</td></tr>
+</tbody></table>
+</section>
+<section id="benchmark">
+<h2>15. 评估纪律与治理考量</h2>
+<div class="takeaway">每一条 transport claim 都应回答一个 operator 的问题：考虑搬运、控制、质量和治理成本之后，这个机制是否提高了满足 SLO 的 goodput？</div>
+<div class="grid2">
+<div>
+<h3>评估维度</h3>
+<table><tbody>
+<tr><td><strong>挪动的边界</strong></td><td>local page、external store、PD handoff、CXL pool、跨集群 service 或 agent workflow。</td></tr>
+<tr><td><strong>Workload regime</strong></td><td>agentic turn traces、RAG/document reuse、long-output decode、multi-tenant prefixes 或 synthetic stress。</td></tr>
+<tr><td><strong>命中分母</strong></td><td>request-level hit、block-level hit、byte-weighted hit 或 prefill-compute-weighted hit。</td></tr>
+<tr><td><strong>路径指标</strong></td><td>mean/p95 transfer time、queueing、CPU overhead、GPU interference、descriptor setup、retry rate。</td></tr>
+<tr><td><strong>终局指标</strong></td><td>P50/P95 TTFT、TPOT stability、SLO goodput、cost per token、GPU utilization、quality retention。</td></tr>
+</tbody></table>
+</div>
+<div>
+<h3>治理 checklist</h3>
+<table><tbody>
+<tr><td><strong>Tenant isolation</strong></td><td>metadata 必须编码 tenant、ACL、policy 和 revocation behavior。</td></tr>
+<tr><td><strong>Compatibility safety</strong></td><td>model/tokenizer/RoPE/dtype/layout 不匹配时拒绝复用，除非 repair 已被显式验证。</td></tr>
+<tr><td><strong>Provenance</strong></td><td>记录 producer、source context、validity epoch、quality confidence 和 fallback path。</td></tr>
+<tr><td><strong>Staleness</strong></td><td>TTL、version 和 context mutation 应使 reuse confidence 失效或降级。</td></tr>
+<tr><td><strong>Auditability</strong></td><td>每个 reused KV object 都留下 lookup、decision、transfer、bind、repair、fallback trace。</td></tr>
+</tbody></table>
+</div>
+</div>
+<div class="guard"><strong>Threat model 示例。</strong> 某个 KV object 可能技术上可达，却因为来自不同 tenant 或 model version 而语义上不安全。传输层搬得越快，越需要 compatibility metadata、tenant policy、provenance 和 recomputation fallback 作为硬门。</div>
+</section>
+<section id="sources">
+<h2>Source trail 与延伸阅读</h2>
+<div class="takeaway">来源按角色分组。产品页面、定价页面和硬件规格都是时间点信号；引用精确价格或产品限制前应重新核对。本文定价来源在 2026-06-05 版本中核对。</div>
+<div class="grid2">
+<div>
+<h3>系统论文与 preprint</h3>
+<ol class="source-list">
+<li><strong>S3</strong> - <a href="https://www.usenix.org/system/files/fast25-qin.pdf">Mooncake FAST'25 paper</a></li>
+<li><strong>S8</strong> - <a href="https://arxiv.org/pdf/2511.20172">Beluga: CXL-Based Memory Architecture for LLM KVCache</a></li>
+<li><strong>S9</strong> - <a href="https://arxiv.org/pdf/2604.15039">Prefill-as-a-Service paper</a></li>
+<li><strong>S11</strong> - <a href="https://www.usenix.org/system/files/nsdi26-luo.pdf">Agentix NSDI'26 paper</a></li>
+<li><strong>S12</strong> - <a href="https://www.usenix.org/system/files/nsdi26-liu-yuhan.pdf">DroidSpeak NSDI'26 paper</a></li>
+<li><strong>S10</strong> - <a href="https://dblp.org/db/conf/fast/fast2026.html">FAST 2026 proceedings index</a></li>
+</ol>
+</div>
+<div>
+<h3>项目与产品文档</h3>
+<ol class="source-list">
+<li><strong>S1</strong> - <a href="https://vllm.ai/blog/2026-05-06-mooncake-store">vLLM × Mooncake Store blog, 2026</a></li>
+<li><strong>S2</strong> - <a href="https://kvcache-ai.github.io/Mooncake/design/transfer-engine/index.html">Mooncake Transfer Engine 设计文档</a></li>
+<li><strong>S7</strong> - <a href="https://docs.dynamo.nvidia.com/dynamo/design-docs/disaggregated-serving">NVIDIA Dynamo disaggregated serving 文档</a></li>
+<li><strong>S16</strong> - <a href="https://recipes.vllm.ai/moonshotai/Kimi-K2.5">vLLM Kimi-K2.5 recipe</a></li>
+</ol>
+<h3>定价与硬件信号</h3>
+<p class="small">DeepSeek V4 Flash/Pro 定价按官方 Models &amp; Pricing 页面核对。价格仍是时间点信号。</p>
+<ol class="source-list">
+<li><strong>S4</strong> - <a href="https://openai.com/api/pricing/">OpenAI API pricing</a></li>
+<li><strong>S5</strong> - <a href="https://api-docs.deepseek.com/quick_start/pricing">DeepSeek API Models &amp; Pricing</a></li>
+<li><strong>S6</strong> - <a href="https://api-docs.deepseek.com/guides/kv_cache/">DeepSeek Context Caching guide</a></li>
+<li><strong>S13</strong> - <a href="https://www.nvidia.com/en-us/data-center/h200/">NVIDIA H200 product page</a></li>
+<li><strong>S14</strong> - <a href="https://www.supermicro.com/en/products/system/gpu/48u/srs-gb300-nvl72">Supermicro GB300 NVL72 rack specifications</a></li>
+<li><strong>S15</strong> - <a href="https://www.nvidia.com/content/dam/en-zz/Solutions/networking/ethernet-adapters/connectx-7-datasheet-Final.pdf">NVIDIA ConnectX-7 datasheet</a></li>
+</ol>
+</div>
+</div>
+</section>
+</div>
+</body>
+</html>
