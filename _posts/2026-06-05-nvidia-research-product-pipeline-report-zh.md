@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "NVIDIA 研究到产品转化管道报告"
+title: "NVIDIA 研究到产品转化"
 date: 2026-06-05
 excerpt: "一份 AI 生成的 HTML 报告，分析 2020 到 2026 年间学术研究如何驱动 NVIDIA 技术生态系统。"
 ---

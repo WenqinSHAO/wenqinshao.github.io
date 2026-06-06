@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "KV Cache 复用：传输与控制视角"
+title: "KV cache reuse的传输视角"
 date: 2026-06-05
 excerpt: "一份 AI 生成的 HTML 报告，分析为什么 KV cache 复用不只是缓存命中问题，而是放置、传输、路由与控制问题。"
 ---
