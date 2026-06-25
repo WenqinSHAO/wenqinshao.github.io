@@ -8,7 +8,7 @@ date: 2026-06-06
 写在 [《NVIDIA文章发表落地转化》]({% post_url 2026-06-05-nvidia-research-product-pipeline-report-zh %}) 和[《KV cache reuse的传输视角》]({% post_url 2026-06-05-kv-cache-reuse-transport-report-zh %})两篇洞察之后。
 AI Agent 无疑放大了我的能力，尤其是收集信息、预处理信息的能力。但组织、理解和判断的瓶颈，最后还是卡在自己的肉脑这里。
 
-![om]({{ site.baseurl }}/assets/images/ChatGPT-alien-stonebreaker.png)
+![courbet]({{ site.baseurl }}/assets/images/ChatGPT-alien-stonebreaker.png)
 <p align="center"><em>外星採石工</em></p>
 
 
